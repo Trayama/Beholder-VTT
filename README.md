@@ -7,11 +7,11 @@
 
 ## 安装
 
-GitHub Pages 部署成功后，在 Owlbear Rodeo 的扩展管理中添加以下 Manifest 地址：
+在 Owlbear Rodeo 的扩展管理中添加以下 Manifest 地址：
 
-`https://trayama.github.io/Beholder-VTT/manifest.json`
+`https://cdn.jsdelivr.net/gh/Trayama/Beholder-VTT@gh-pages/manifest.json`
 
-首次启用 Pages：打开仓库 **Settings → Pages → Build and deployment**，将 **Source** 设为 **GitHub Actions**。之后 `main` 或 `develop` 分支的推送会触发构建与部署。部署完成后，上面的 Manifest 地址即可使用。
+扩展文件由 GitHub Actions 自动构建并发布到 `gh-pages` 分支，通过 jsDelivr CDN 提供。每次 `main` 或 `develop` 分支更新后，CI 检查通过便会自动更新发布文件。无需手动启用 GitHub Pages。
 
 ## 参考项目
 
@@ -24,7 +24,7 @@ GitHub Pages 部署成功后，在 Owlbear Rodeo 的扩展管理中添加以下 
 - 独立 TypeScript 项目，不以旧 WallBrush 0.3.0 代码为基础。
 - Owlbear SDK 适配层、模块注册、日志和 GM 权限检查。
 - 版本化墙体元数据。
-- GitHub Actions 类型检查、自动化测试与 Pages 部署。
+- GitHub Actions 类型检查、自动化测试与 jsDelivr CDN 发布。
 
 ### 阶段 1A：墙体同步纵切片
 
