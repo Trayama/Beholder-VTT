@@ -4,7 +4,17 @@ Date: 2026-11-07
 
 ## Automated validation
 
-GitHub Actions validation is pending for this commit. Update this section with the exact workflow run, commit SHA, test count, and Pages deployment result after CI completes.
+GitHub Actions run: [42387814816](https://github.com/Trayama/Beholder-VTT/actions/runs/42387814816)  
+Commit: `05f7256de83c8e03b2a82854d5cddbdc046f3349`
+
+| Check | Result |
+|---|---|
+| TypeScript type check | PASS |
+| Production build | PASS |
+| Unit tests | PASS — 21 passed, 0 failed |
+| GitHub Pages build | PASS |
+| GitHub Pages deployment | PASS |
+| Published manifest version | 0.0.8 |
 
 ## 0.0.8 changes
 
