@@ -1,7 +1,6 @@
 import { OBR } from "../../platform/obr.js";
-import type { SceneItem, Vector2 } from "../../platform/obr.js";
+import type { LineItem, SceneItem, Vector2 } from "../../platform/obr.js";
 import { logger } from "../../core/logger.js";
-import { PREFERENCES, readBooleanPreference } from "../../core/preferences.js";
 import { constrainMovement, transformPoint } from "./geometry.js";
 import type { WallSegment2D } from "./geometry.js";
 import { isWallSource, readWallSourceMetadata } from "./model.js";
@@ -38,21 +37,13 @@ export class MovementBlocker {
   private readonly snapshots = new Map<string, TokenSnapshot>();
   private readonly unsubscribers: Array<() => void> = [];
   private playerId = "";
-  private enabled = true;
   private disposed = false;
   private processing = false;
   private pendingItems: SceneItem[] | null = null;
   private walls: WallSegment2D[] = [];
-  private storageHandler: ((event: StorageEvent) => void) | null = null;
 
   async start(): Promise<void> {
     this.playerId = await OBR.player.getId();
-    this.enabled = readBooleanPreference(PREFERENCES.movement, true);
-    this.storageHandler = (event) => {
-      if (event.key === PREFERENCES.movement) this.enabled = event.newValue !== "false";
-    };
-    window.addEventListener("storage", this.storageHandler);
-
     this.unsubscribers.push(
       OBR.scene.items.onChange((items) => this.enqueue(items)),
       OBR.scene.onReadyChange((ready) => {
@@ -83,8 +74,6 @@ export class MovementBlocker {
         logger.warn("A movement-blocker subscription could not be removed cleanly.", error);
       }
     }
-    if (this.storageHandler) window.removeEventListener("storage", this.storageHandler);
-    this.storageHandler = null;
     this.snapshots.clear();
   }
 
@@ -110,7 +99,8 @@ export class MovementBlocker {
   }
 
   private wallSegments(items: SceneItem[]): WallSegment2D[] {
-    return items.filter(isWallSource).flatMap((source) => {
+    const sources = items.filter(isWallSource) as LineItem[];
+    return sources.flatMap((source) => {
       const metadata = readWallSourceMetadata(source);
       if (!metadata?.blocking.blocksMovement) return [];
       const position = source.position ?? ZERO;
@@ -189,7 +179,7 @@ export class MovementBlocker {
         movedByThisPlayer = localSelection?.includes(token.id) ?? false;
       }
 
-      if (!movedByThisPlayer || !this.enabled || this.walls.length === 0) {
+      if (!movedByThisPlayer || this.walls.length === 0) {
         this.snapshots.set(token.id, current);
         continue;
       }

@@ -16,12 +16,6 @@ const RECTANGLE_MODE_ID = TOOL_ID + "/rectangle";
 const SELECT_MODE_ID = TOOL_ID + "/select";
 const ERASE_MODE_ID = TOOL_ID + "/erase";
 const PROPERTIES_ACTION_ID = TOOL_ID + "/properties";
-const SNAP_ACTION_ID = TOOL_ID + "/snap";
-const GUIDES_ACTION_ID = TOOL_ID + "/guides";
-const UNDO_ACTION_ID = TOOL_ID + "/undo";
-const REDO_ACTION_ID = TOOL_ID + "/redo";
-const CLEAR_ACTION_ID = TOOL_ID + "/clear";
-const FINISH_ACTION_ID = TOOL_ID + "/finish-polyline";
 const PROPERTIES_POPOVER_ID = "com.beholder-vtt/wall-properties";
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
@@ -61,7 +55,6 @@ export class WallDrawTool {
   private selectionPreviewIds: string[] = [];
   private selectedWallId: string | null = null;
   private editSession: EditSession | null = null;
-  private clearArmedUntil = 0;
   private toolbarVisible = false;
   private registered = false;
   private snapToGrid = false;
@@ -616,7 +609,6 @@ export class WallDrawTool {
 
   private async openProperties(elementId: string): Promise<void> {
     if (!this.selectedWallId) {
-      await OBR.notification.show("请先使用选择工具选中一条墙体。", "INFO");
       return;
     }
     await OBR.popover.open({
@@ -626,51 +618,6 @@ export class WallDrawTool {
       height: 330,
       anchorElementId: elementId,
     });
-  }
-
-  private async toggleSnap(): Promise<void> {
-    this.snapToGrid = !this.snapToGrid;
-    writeBooleanPreference(PREFERENCES.snap, this.snapToGrid);
-    if (this.registered) await OBR.tool.setMetadata(TOOL_ID, { snapToGrid: this.snapToGrid });
-  }
-
-  private async toggleGuides(): Promise<void> {
-    const visible = !readBooleanPreference(PREFERENCES.guides, true);
-    writeBooleanPreference(PREFERENCES.guides, visible);
-    this.reconciler.setGuidesVisible(visible);
-  }
-
-  private async undo(): Promise<void> {
-    try {
-      if (await OBR.scene.history.canUndo()) await OBR.scene.history.undo();
-    } catch (error) {
-      logger.warn("Undo is unavailable.", error);
-    }
-  }
-
-  private async redo(): Promise<void> {
-    try {
-      if (await OBR.scene.history.canRedo()) await OBR.scene.history.redo();
-    } catch (error) {
-      logger.warn("Redo is unavailable.", error);
-    }
-  }
-
-  private async clearWalls(): Promise<void> {
-    const now = Date.now();
-    if (now > this.clearArmedUntil) {
-      this.clearArmedUntil = now + 5000;
-      await OBR.notification.show("请在 5 秒内再次点击清空按钮确认。", "WARNING");
-      return;
-    }
-    this.clearArmedUntil = 0;
-    const sources = await this.allWallSources();
-    if (!sources.length) {
-      return;
-    }
-    await OBR.scene.items.deleteItems(sources.map((source) => source.id));
-    await this.setSelection(null);
-    await this.reconciler.schedule("walls-cleared");
   }
 
   private async cancelAllInteractions(): Promise<void> {

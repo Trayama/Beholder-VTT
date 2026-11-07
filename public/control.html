@@ -175,7 +175,7 @@
           <div class="setting-copy"><strong>光标吸附</strong><small>自由绘制不受网格约束；网格模式按场景网格定位。</small></div>
           <div class="segmented"><button id="snap-free">自由</button><button id="snap-grid">网格</button></div>
         </div>
-        <div class="setting-row">
+        <div class="setting-row" data-gm-only>
           <div class="setting-copy"><strong>端点吸附</strong><small>靠近已有墙体端点时自动连接。</small></div>
           <input id="endpoint-snap" type="checkbox" />
         </div>
@@ -187,8 +187,8 @@
           <input id="guides-visible" type="checkbox" />
         </div>
         <div class="setting-row">
-          <div class="setting-copy"><strong>墙体移动阻挡</strong><small>棋子移动穿过阻挡墙时，自动回退到碰撞前的位置。</small></div>
-          <input id="movement-enabled" type="checkbox" />
+          <div class="setting-copy"><strong>墙体移动阻挡</strong><small>由每段墙体的属性独立决定，碰撞限制在移动端本地执行。</small></div>
+          <span class="tag">已启用</span>
         </div>
       </article>
     </section>

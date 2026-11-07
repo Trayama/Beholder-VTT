@@ -7,7 +7,6 @@ const freeButton = document.querySelector<HTMLButtonElement>("#snap-free");
 const gridButton = document.querySelector<HTMLButtonElement>("#snap-grid");
 const endpointSnap = document.querySelector<HTMLInputElement>("#endpoint-snap");
 const guidesVisible = document.querySelector<HTMLInputElement>("#guides-visible");
-const movementEnabled = document.querySelector<HTMLInputElement>("#movement-enabled");
 const undoButton = document.querySelector<HTMLButtonElement>("#undo");
 const redoButton = document.querySelector<HTMLButtonElement>("#redo");
 const clearButton = document.querySelector<HTMLButtonElement>("#clear-walls");
@@ -49,7 +48,6 @@ function updateSnapButtons(): void {
 function syncPreferences(): void {
   if (endpointSnap) endpointSnap.checked = readBooleanPreference(PREFERENCES.endpointSnap, true);
   if (guidesVisible) guidesVisible.checked = readBooleanPreference(PREFERENCES.guides, true);
-  if (movementEnabled) movementEnabled.checked = readBooleanPreference(PREFERENCES.movement, true);
   updateSnapButtons();
   updateToolbarButton();
 }
@@ -76,7 +74,6 @@ gridButton?.addEventListener("click", () => {
 
 bindToggle(endpointSnap, PREFERENCES.endpointSnap);
 bindToggle(guidesVisible, PREFERENCES.guides);
-bindToggle(movementEnabled, PREFERENCES.movement);
 
 async function updateHistoryButtons(): Promise<void> {
   try {
