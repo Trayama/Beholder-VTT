@@ -13,7 +13,7 @@
 
 ## Phase 1A — Wall projection vertical slice
 
-- [x] GM-only single-segment drag drawing.
+- [x] GM-only wall creation.
 - [x] Hidden shared LINE source.
 - [x] Local WALL projection on each connected client.
 - [x] Update/delete/reload reconciliation base.
@@ -21,21 +21,23 @@
 
 ## Phase 1B — Wall editor
 
-- [ ] Continuous polyline drawing.
-- [ ] Rectangle tool.
-- [ ] Select and move whole wall.
-- [ ] Endpoint and node editing.
-- [ ] Eraser and segment deletion.
-- [ ] Undo/redo.
+- [x] Continuous polyline drawing.
+- [x] Rectangle tool.
+- [x] Select and move whole wall groups.
+- [x] Endpoint and connected-node editing.
+- [x] Eraser and whole-wall deletion.
+- [x] Undo/redo actions.
 - [ ] Endpoint snapping and automatic connections.
 - [ ] Junction and seam tests.
+- [ ] Real-room interaction and persistence acceptance.
 
 ## Phase 1C — Openings and independent spatial properties
 
 - [ ] Door and window objects.
 - [ ] Door state changes.
 - [ ] Wall-relative opening anchors.
-- [ ] Independent movement, vision, and light blocking.
+- [x] Independent movement, vision, and light blocking metadata.
+- [ ] Movement collision and light-blocking adapters.
 - [ ] Shared spatial query interface.
 
 ## Phase 1D — Dynamic light and fog
@@ -46,4 +48,4 @@
 - [ ] Fog settings and token vision.
 - [ ] Color/brightness rendering strategy.
 
-Every phase requires type checking, build, unit tests, runtime testing, persistence testing, and GM/player dual-client acceptance before it is marked complete.
+Every phase requires type checking, build, unit tests, runtime testing, persistence testing, and GM/player dual-client acceptance before it is marked complete. A checked implementation item is not a phase acceptance claim.

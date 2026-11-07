@@ -1,35 +1,36 @@
-# Test report — Beholder VTT 0.0.1
+# Test report — Beholder VTT 0.0.4
 
 Date: 2026-11-07
 
-## Automated checks (re-run before repository import)
+## Automated checks
+
+GitHub Actions run: [42370150770](https://github.com/Trayama/Beholder-VTT/actions/runs/42370150770)
 
 | Check | Result | Notes |
 |---|---|---|
-| TypeScript typecheck | PASS | `tsc -p tsconfig.json --noEmit` |
+| TypeScript typecheck | PASS | `npm run typecheck` |
 | Build | PASS | `node scripts/build.mjs` |
-| Geometry tests | PASS | Coordinate transform, point-to-segment distance, intersection, segment distance |
-| Metadata tests | PASS | Independent blocking flags, valid/invalid source metadata, local projection marker |
-| Total automated tests | PASS | 8 passed, 0 failed |
-| Local development manifest | PASS | `http://localhost:5173/manifest.json` returned HTTP 200 with local asset URLs |
-| Local background page | PASS | `/background.html` returned HTTP 200 |
+| Existing unit tests | PASS | 8 passed, 0 failed |
+| Production manifest build | PASS | Action popover and background URLs point to GitHub Pages |
+| GitHub Pages deployment | PASS | `develop` build published to `gh-pages` |
 
-## Deployment setup
+## New editor surface
 
-- Production manifest points to `https://trayama.github.io/Beholder-VTT/`.
-- GitHub Actions workflow builds and tests the project, then deploys `dist/` to Pages on pushes to `main` or `develop`.
-- Repository Pages source must be set to **GitHub Actions** once in Settings → Pages.
+- Left-top global control page is included in the deployment.
+- Right-side wall tool registers five modes and seven actions.
+- Wall property page and mode icons are included in the deployment.
+- Local preferences are separated from shared scene data.
 
-## Not yet verified
+## Not yet verified in a live Owlbear room
 
-The extension has not yet been installed into a live Owlbear room in this environment. These acceptance checks remain pending:
+The automated build does not prove the editor works correctly inside a real Owlbear room. These acceptance checks remain pending:
 
-- GM can draw a wall in a real room.
-- Player client creates a local WALL for the same shared LINE.
-- GM guide is visible only to GM.
-- Editing the shared source updates both local projections.
-- Deleting the shared source removes both local projections.
-- Scene reload recreates local projections without duplicates.
-- Reconnecting a player restores projections.
+- Top-left control popover opens and its toolbar visibility toggle registers/removes the right-side tool.
+- GM can use all five modes and all seven actions.
+- Continuous walls remain connected when a node is dragged.
+- Wall property changes update all segments in a wall group and all clients' local projections.
+- Player clients receive local WALL projections but never GM helper lines.
+- Undo/redo, delete, clear, scene reload, and reconnect behave correctly.
+- Large maps remain responsive during editing and synchronization.
 
-A successful TypeScript build and unit-test run are not treated as proof of live Owlbear functionality.
+A successful CI run is not treated as proof of live runtime functionality. Do not mark the phase accepted until these checks pass in an actual GM/player room.
