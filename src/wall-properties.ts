@@ -16,6 +16,7 @@ function message(value: string): void {
 }
 
 OBR.onReady(async () => {
+  cancel?.addEventListener("click", () => void OBR.popover.close(POPOVER_ID));
   try {
     const toolMetadata = await OBR.tool.getMetadata(TOOL_ID);
     const wallId = typeof toolMetadata.selectedWallId === "string" ? toolMetadata.selectedWallId : "";
@@ -62,7 +63,6 @@ OBR.onReady(async () => {
         message("保存失败：" + (error instanceof Error ? error.message : "未知错误"));
       }
     });
-    cancel?.addEventListener("click", () => void OBR.popover.close(POPOVER_ID));
   } catch (error) {
     message("无法读取墙体属性：" + (error instanceof Error ? error.message : "未知错误"));
   }
