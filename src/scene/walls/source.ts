@@ -12,23 +12,40 @@ import {
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
 
+export function createWallSources(points: Vector2[]): LineItem[] {
+  if (points.length < 2) return [];
+  const wallId = crypto.randomUUID();
+  const segmentCount = points.length - 1;
+  return points.slice(0, -1).map((start, segmentIndex) => {
+    const end = points[segmentIndex + 1];
+    if (!end) throw new Error("A wall segment is missing its endpoint.");
+    const id = crypto.randomUUID();
+    const metadata = {
+      ...createDefaultWallMetadata(wallId),
+      segmentIndex,
+      segmentCount,
+    };
+    return buildLine()
+      .id(id)
+      .name("Beholder Wall Source")
+      .startPosition(start)
+      .endPosition(end)
+      .position(ZERO)
+      .rotation(0)
+      .scale(UNIT)
+      .visible(false)
+      .layer("FOG")
+      .locked(true)
+      .disableHit(true)
+      .metadata({ [WALL_SOURCE_KEY]: metadata })
+      .build();
+  });
+}
+
 export function createWallSource(start: Vector2, end: Vector2): LineItem {
-  const id = crypto.randomUUID();
-  const metadata = createDefaultWallMetadata(id);
-  return buildLine()
-    .id(id)
-    .name("Beholder Wall Source")
-    .startPosition(start)
-    .endPosition(end)
-    .position(ZERO)
-    .rotation(0)
-    .scale(UNIT)
-    .visible(false)
-    .layer("FOG")
-    .locked(true)
-    .disableHit(true)
-    .metadata({ [WALL_SOURCE_KEY]: metadata })
-    .build();
+  const source = createWallSources([start, end])[0];
+  if (!source) throw new Error("Could not create wall source.");
+  return source;
 }
 
 export function createLocalWall(source: LineItem): WallItem {
@@ -110,7 +127,7 @@ export function sourceMatchesProjection(source: LineItem, projection: WallItem):
 }
 
 
-export function createLocalGuide(source: LineItem): LineItem {
+export function createLocalGuide(source: LineItem, visible = true): LineItem {
   const metadata = readWallSourceMetadata(source);
   if (!metadata) throw new Error(`Invalid wall source metadata: ${source.id}`);
   const position = source.position ?? ZERO;
@@ -130,7 +147,7 @@ export function createLocalGuide(source: LineItem): LineItem {
     .strokeOpacity(0.95)
     .strokeWidth(4)
     .strokeDash([8, 5])
-    .visible(true)
+    .visible(visible)
     .layer("CONTROL")
     .locked(true)
     .disableHit(true)
@@ -144,7 +161,7 @@ export function createLocalGuide(source: LineItem): LineItem {
     .build();
 }
 
-export function applySourceToGuideDraft(draft: SceneItem, source: LineItem): void {
+export function applySourceToGuideDraft(draft: SceneItem, source: LineItem, visible = true): void {
   const metadata = readWallSourceMetadata(source);
   if (!metadata) return;
   const position = source.position ?? ZERO;
@@ -156,7 +173,7 @@ export function applySourceToGuideDraft(draft: SceneItem, source: LineItem): voi
   draft.position = ZERO;
   draft.rotation = 0;
   draft.scale = UNIT;
-  draft.visible = true;
+  draft.visible = visible;
   draft.layer = "CONTROL";
   draft.locked = true;
   draft.disableHit = true;
@@ -175,7 +192,7 @@ export function applySourceToGuideDraft(draft: SceneItem, source: LineItem): voi
   };
 }
 
-export function sourceMatchesGuide(source: LineItem, guide: LineItem): boolean {
+export function sourceMatchesGuide(source: LineItem, guide: LineItem, visible = true): boolean {
   const metadata = readWallSourceMetadata(source);
   if (!metadata) return false;
   const localMeta = guide.metadata?.[LOCAL_GUIDE_KEY] as { sourceId?: unknown; sourceRevision?: unknown } | undefined;
@@ -192,6 +209,6 @@ export function sourceMatchesGuide(source: LineItem, guide: LineItem): boolean {
     localMeta?.sourceRevision === metadata.revision &&
     sameVector(guide.startPosition, expectedStart) &&
     sameVector(guide.endPosition, expectedEnd) &&
-    guide.visible === true &&
+    guide.visible === visible &&
     guide.layer === "CONTROL";
 }

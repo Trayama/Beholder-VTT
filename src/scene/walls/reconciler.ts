@@ -1,7 +1,7 @@
 import { OBR } from "../../platform/obr.js";
 import type { LineItem, SceneItem, WallItem } from "../../platform/obr.js";
 import { logger } from "../../core/logger.js";
-import { isLocalGuide, isLocalWall, isWallSource, readLocalGuideMetadata, readLocalWallMetadata } from "./model.js";
+import { isLocalGuide, isLocalWall, isWallSource, readLocalGuideMetadata, readLocalWallMetadata, readWallSourceMetadata } from "./model.js";
 import { applySourceToGuideDraft, applySourceToLocalDraft, createLocalGuide, createLocalWall, sourceMatchesGuide, sourceMatchesProjection } from "./source.js";
 
 interface ProjectionUpdate {
@@ -14,13 +14,41 @@ export class WallReconciler {
   private readonly unsubscribers: Array<() => void> = [];
   private disposed = false;
   private expectedLocalIds = new Set<string>();
+  private guidesVisible = true;
+  private lastSourceSignature = "";
+
+  setGuidesVisible(visible: boolean): void {
+    if (this.guidesVisible === visible) return;
+    this.guidesVisible = visible;
+    void this.schedule("guide-visibility-changed");
+  }
+
+  private sourceSignature(items: SceneItem[]): string {
+    return items.filter(isWallSource).map((item) => {
+      const metadata = readWallSourceMetadata(item);
+      return [
+        item.id,
+        metadata?.revision ?? 0,
+        item.startPosition?.x ?? 0,
+        item.startPosition?.y ?? 0,
+        item.endPosition?.x ?? 0,
+        item.endPosition?.y ?? 0,
+        metadata?.blocking.blocksMovement ?? false,
+        metadata?.blocking.blocksVision ?? false,
+        metadata?.blocking.blocksLight ?? false,
+      ].join(":");
+    }).sort().join("|");
+  }
 
   start(): void {
     if (this.unsubscribers.length > 0) return;
 
     this.unsubscribers.push(
-      OBR.scene.items.onChange(() => {
-        void this.schedule("shared-scene-change");
+      OBR.scene.items.onChange((items) => {
+        const signature = this.sourceSignature(items);
+        if (signature !== this.lastSourceSignature) {
+          void this.schedule("shared-wall-change");
+        }
       }),
       OBR.scene.local.onChange((items) => {
         const actual = new Set(items.filter((item) => isLocalWall(item) || isLocalGuide(item)).map((item) => item.id));
@@ -68,6 +96,7 @@ export class WallReconciler {
     ]);
 
     const sources = sharedItems.filter(isWallSource) as LineItem[];
+    this.lastSourceSignature = this.sourceSignature(sharedItems);
     const sourceById = new Map(sources.map((source) => [source.id, source]));
     const role = await OBR.player.getRole();
     const localWalls = localItems.filter(isLocalWall) as WallItem[];
@@ -115,10 +144,10 @@ export class WallReconciler {
       const existingGuide = guideCandidates.shift();
       if (role === "GM") {
         if (!existingGuide) {
-          guideAdditions.push(createLocalGuide(source));
+          guideAdditions.push(createLocalGuide(source, this.guidesVisible));
         } else {
           nextExpectedIds.add(existingGuide.id);
-          if (!sourceMatchesGuide(source, existingGuide)) {
+          if (!sourceMatchesGuide(source, existingGuide, this.guidesVisible)) {
             guideUpdates.push({ current: existingGuide, source });
           }
         }
@@ -140,6 +169,10 @@ export class WallReconciler {
         deletions.push(guide.id);
       }
     }
+
+    for (const wall of additions) nextExpectedIds.add(wall.id);
+    for (const guide of guideAdditions) nextExpectedIds.add(guide.id);
+    this.expectedLocalIds = nextExpectedIds;
 
     if (deletions.length > 0) {
       await OBR.scene.local.deleteItems([...new Set(deletions)]);
@@ -165,7 +198,7 @@ export class WallReconciler {
         (drafts) => {
           for (const draft of drafts) {
             const source = sourceByGuideId.get(draft.id);
-            if (source) applySourceToGuideDraft(draft, source);
+            if (source) applySourceToGuideDraft(draft, source, this.guidesVisible);
           }
         },
       );
@@ -173,14 +206,10 @@ export class WallReconciler {
 
     if (additions.length > 0) {
       await OBR.scene.local.addItems(additions);
-      for (const wall of additions) nextExpectedIds.add(wall.id);
     }
     if (guideAdditions.length > 0) {
       await OBR.scene.local.addItems(guideAdditions);
-      for (const guide of guideAdditions) nextExpectedIds.add(guide.id);
     }
-
-    this.expectedLocalIds = nextExpectedIds;
     logger.debug("Wall projections reconciled.", {
       reason,
       sharedSources: sources.length,

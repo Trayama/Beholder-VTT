@@ -96,12 +96,31 @@ export interface ToolEvent {
   shiftKey: boolean;
   ctrlKey: boolean;
   metaKey: boolean;
+  target?: SceneItem;
+  transformer?: boolean;
+}
+
+export interface ToolActionDefinition {
+  id: string;
+  icons: ToolIcon[];
+  disabled?: { roles?: PlayerRole[] };
+  onClick?: (context: unknown, elementId: string) => void | Promise<void>;
+  shortcut?: string;
+}
+
+export interface PopoverDefinition {
+  id: string;
+  url: string;
+  width: number;
+  height: number;
+  anchorElementId?: string;
+  anchorPosition?: { left: number; top: number };
 }
 
 export interface ToolIcon {
   icon: string;
   label: string;
-  filter?: { roles?: PlayerRole[]; activeTools?: string[] };
+  filter?: { roles?: PlayerRole[]; activeTools?: string[]; activeModes?: string[] };
 }
 
 export interface ToolDefinition {
@@ -116,6 +135,9 @@ export interface ToolModeDefinition {
   icons: ToolIcon[];
   disabled?: { roles?: PlayerRole[] };
   cursors?: Array<{ cursor: string }>;
+  onToolClick?: (context: unknown, event: ToolEvent) => void | boolean | Promise<void | boolean>;
+  onToolDoubleClick?: (context: unknown, event: ToolEvent) => void | boolean | Promise<void | boolean>;
+  onToolMove?: (context: unknown, event: ToolEvent) => void | Promise<void>;
   onToolDragStart?: (context: unknown, event: ToolEvent) => void | Promise<void>;
   onToolDragMove?: (context: unknown, event: ToolEvent) => void | Promise<void>;
   onToolDragEnd?: (context: unknown, event: ToolEvent) => void | Promise<void>;
@@ -137,6 +159,10 @@ export interface OBRApi {
     createMode(mode: ToolModeDefinition): Promise<void>;
     remove(id: string): Promise<void>;
     removeMode(id: string): Promise<void>;
+    createAction(action: ToolActionDefinition): Promise<void>;
+    removeAction(id: string): Promise<void>;
+    getMetadata(id: string): Promise<Record<string, unknown>>;
+    setMetadata(id: string, update: Record<string, unknown>): Promise<void>;
   };
   scene: {
     isReady(): Promise<boolean>;
@@ -147,7 +173,15 @@ export interface OBRApi {
     items: {
       getItems(filter?: (item: SceneItem) => boolean): Promise<SceneItem[]>;
       addItems(items: SceneItem[]): Promise<void>;
+      updateItems(filterOrItems: SceneItem[] | ((item: SceneItem) => boolean), update: (drafts: SceneItem[]) => void): Promise<void>;
+      deleteItems(ids: string[]): Promise<void>;
       onChange(callback: (items: SceneItem[]) => void): () => void;
+    };
+    history: {
+      undo(): Promise<void>;
+      redo(): Promise<void>;
+      canUndo(): Promise<boolean>;
+      canRedo(): Promise<boolean>;
     };
     local: {
       getItems(filter?: (item: SceneItem) => boolean): Promise<SceneItem[]>;
@@ -156,6 +190,13 @@ export interface OBRApi {
       deleteItems(ids: string[]): Promise<void>;
       onChange(callback: (items: SceneItem[]) => void): () => void;
     };
+  };
+  popover: {
+    open(popover: PopoverDefinition): Promise<void>;
+    close(id: string): Promise<void>;
+  };
+  viewport: {
+    getScale(): Promise<number>;
   };
 }
 

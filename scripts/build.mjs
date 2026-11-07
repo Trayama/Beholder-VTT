@@ -19,6 +19,12 @@ if (baseUrl) {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   manifest.icon = `${baseUrl}/icon.svg`;
   manifest.background_url = `${baseUrl}/background.html`;
+  manifest.action = {
+    ...manifest.action,
+    title: "Beholder VTT",
+    icon: `${baseUrl}/icon.svg`,
+    popover: `${baseUrl}/control.html`,
+  };
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 

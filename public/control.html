@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beholder VTT 控制台</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #171b22; color: #edf1f7; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 18px; }
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .brand { font-size:15px; font-weight:800; letter-spacing:.08em; }
+    .version { color:#9ca8b8; font-size:11px; }
+    .sub { color:#9ca8b8; font-size:12px; margin-top:4px; }
+    section { border:1px solid #343d4a; border-radius:12px; padding:14px; margin:12px 0; background:#202630; }
+    h2 { font-size:13px; margin:0 0 12px; color:#d9e0e9; }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:14px; min-height:38px; }
+    .row + .row { border-top:1px solid #343d4a; padding-top:9px; margin-top:9px; }
+    .label { font-size:13px; font-weight:600; }
+    .desc { color:#9ca8b8; font-size:11px; line-height:1.45; margin-top:3px; }
+    .state { color:#d8b76d; font-size:11px; white-space:nowrap; }
+    input[type=checkbox] { appearance:none; width:36px; height:20px; border-radius:12px; background:#566170; position:relative; cursor:pointer; flex:0 0 auto; transition:.15s; }
+    input[type=checkbox]::after { content:""; position:absolute; width:14px; height:14px; left:3px; top:3px; border-radius:50%; background:#fff; transition:.15s; }
+    input[type=checkbox]:checked { background:#9a7be8; }
+    input[type=checkbox]:checked::after { transform:translateX(16px); }
+    .foot { color:#8290a2; font-size:11px; line-height:1.5; padding:4px 2px 0; }
+    .module { display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:7px 0; }
+    .module + .module { border-top:1px solid #343d4a; }
+    .tag { color:#d9b76d; font-size:10px; }
+  </style>
+  <script type="importmap">
+    { "imports": { "@owlbear-rodeo/sdk": "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@3.1.0/+esm" } }
+  </script>
+</head>
+<body>
+  <header>
+    <div><div class="brand">BEHOLDER VTT</div><div class="sub">TRPG 桌面工具总控</div></div>
+    <div class="version">v0.0.4</div>
+  </header>
+  <section>
+    <h2>界面</h2>
+    <div class="row">
+      <div><div class="label">在右侧工具栏显示地图工具</div><div class="desc">关闭后只隐藏右侧入口，不影响墙体数据和同步。</div></div>
+      <input id="toolbar-visible" type="checkbox" />
+    </div>
+    <div class="row"><div class="label">右侧工具栏状态</div><span id="toolbar-state" class="state">已显示</span></div>
+  </section>
+  <section>
+    <h2>地图构造</h2>
+    <div class="row" id="guide-row">
+      <div><div class="label">显示 GM 墙体辅助线</div><div class="desc">仅影响你自己的视图，不会显示给玩家。</div></div>
+      <input id="guides-visible" type="checkbox" />
+    </div>
+    <div class="row">
+      <div><div class="label">网格吸附</div><div class="desc">绘制和编辑墙体时吸附到当前场景网格。</div></div>
+      <input id="grid-snap" type="checkbox" />
+    </div>
+  </section>
+  <section>
+    <h2>模块状态</h2>
+    <div class="module"><span>地图构造 · 墙体编辑器</span><span class="tag">可用</span></div>
+    <div class="module"><span>动态光照与迷雾</span><span class="tag">后续阶段</span></div>
+    <div class="module"><span>角色与战斗</span><span class="tag">后续阶段</span></div>
+    <div class="module"><span>演出工具</span><span class="tag">后续阶段</span></div>
+  </section>
+  <div class="foot"><span id="role-label">正在连接…</span> · <span id="scene-label">正在读取场景…</span><br/>设置保存在本地，不会写入共享场景。</div>
+  <script type="module" src="./control.js"></script>
+</body>
+</html>
