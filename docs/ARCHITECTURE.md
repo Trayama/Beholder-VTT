@@ -21,8 +21,17 @@ This is a hard architectural constraint for the wall system. Do not replace it w
 - Local-only objects must be reconciled independently on every client, including after scene reload and reconnect.
 - GM helper lines remain local and must not leak into player clients.
 
+## UI placement architecture
+
+- The primary Beholder entry is an Owlbear custom Tool created with `OBR.tool.create`; it belongs in the right-side scene toolbar.
+- Tool Modes are shown in the left side of the selected tool's top menu; Tool Actions are shown on the right side of that menu.
+- A single available mode may be hidden by Owlbear to keep the menu compact. This does not hide the parent Tool from the right-side toolbar.
+- Do not make the primary workflow accessible only through an extension Action in the upper-left corner.
+- Use one Beholder toolbar entry with contextual modes and actions. Use a Popover only for configuration or information that does not belong directly in the canvas interaction flow.
+- Player-facing visibility and GM-only permissions must be controlled independently: the tool may be visible to both roles while destructive or authoring modes remain GM-only, if that produces a clearer interface.
+
 ## Current implementation boundary
 
-Version 0.0.1 implements single-segment creation, shared hidden `LINE` storage, local `WALL` projection, `attachedTo`, GM-only local helper lines, and reconciliation. It stores all three blocking flags independently. For this initial vertical slice, only `blocksVision` is mapped to Owlbear's native `WALL.blocking`; movement collision and a separate light-blocking adapter are not yet implemented.
+Version 0.0.2 implements single-segment creation, shared hidden `LINE` storage, local `WALL` projection, `attachedTo`, GM-only local helper lines, and reconciliation. It stores all three blocking flags independently. For this initial vertical slice, only `blocksVision` is mapped to Owlbear's native `WALL.blocking`; movement collision and a separate light-blocking adapter are not yet implemented.
 
 Owlbear documents native `WALL` items as local-only and as part of its Dynamic Fog feature. Beholder's own source geometry and lifecycle remain independent of Fog/Light state; the native `WALL` is currently only the client-side projection used by this slice. Do not silently expand this projection into the wall data model.
