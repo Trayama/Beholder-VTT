@@ -94,6 +94,10 @@ export class TokenMovementTool {
     const settingsIcon = new URL("./icons/settings.svg", window.location.href).toString();
 
     try {
+      // Clean up modes left by the previous native Select integration.
+      try { await OBR.tool.removeMode("com.beholder-vtt/native-select-passthrough"); } catch { /* legacy mode absent */ }
+      try { await OBR.tool.removeMode("com.beholder-vtt/native-select-collision"); } catch { /* legacy mode absent */ }
+
       await OBR.tool.create({
         id: TOOL_ID,
         icons: [{ icon, label: "Beholder VTT · 选择与移动（墙体感知）" }],
@@ -238,6 +242,7 @@ export class TokenMovementTool {
   }
 
   private begin(event: ToolEvent): void {
+    if (this.starting || this.session) this.cancel();
     if (!event.target) {
       this.marqueeStart = { ...event.pointerPosition };
       this.marqueeAdditive = event.shiftKey || event.ctrlKey || event.metaKey;
@@ -249,7 +254,6 @@ export class TokenMovementTool {
 
     const target = event.target;
     if (!isMovableToken(target) || target.locked) return;
-    if (this.starting || this.session) this.cancel();
 
     const generation = ++this.generation;
     this.starting = true;
