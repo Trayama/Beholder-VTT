@@ -1,41 +1,34 @@
-# Test report — Beholder VTT 0.0.6
+# Test report — Beholder VTT 0.0.7
 
 Date: 2026-11-07
 
 ## Automated validation
 
-GitHub Actions run: [42375285389](https://github.com/Trayama/Beholder-VTT/actions/runs/42375285389)  
-Commit: `b96b5361473dd032943217794a50c2de68550671`
+GitHub Actions validation is pending for this commit. Update this section with the exact workflow run, commit SHA, test count, and Pages deployment result after CI completes.
 
-| Check | Result |
-|---|---|
-| TypeScript type check | PASS |
-| Production build | PASS |
-| Unit tests | PASS — 12 passed, 0 failed |
-| GitHub Pages build | PASS |
-| GitHub Pages deployment | PASS |
-| Published manifest version | 0.0.6 |
+## 0.0.7 changes
 
-## 0.0.6 changes covered by automated validation
-
-- Unified left-top control panel and its toolbar / snap / endpoint / guide / wall-property / undo / redo / clear controls.
-- Free-position drawing and optional grid snapping, including temporary Ctrl / Cmd bypass.
-- Reordered right-side wall modes and always-visible properties action.
-- GM-authoritative post-commit movement correction for CHARACTER and MOUNT image tokens.
-- Independent wall movement / vision / light metadata remains intact; local native WALL blocking stays disabled.
+- Added a dedicated Beholder wall-aware token movement tool for GM and player clients.
+- Uses Owlbear's Interaction API for high-frequency token position updates.
+- Applies shared LINE wall geometry with `blocksMovement=true`; does not inspect Light attachment or token creator.
+- Retained the GM-side post-commit correction as a fallback for native Owlbear tools.
+- GM fallback now refreshes a complete scene snapshot after item-change events rather than trusting the event payload to be a full-scene snapshot.
+- Added pure tests for no-Light CHARACTER tokens, GM/player-created tokens, MOUNT tokens, and movement-wall geometry.
+- Native local WALL projections remain `blocking=false`; vision, movement, and light properties remain separate.
 
 ## Real Owlbear room verification — pending
 
-CI does not prove real Owlbear interaction or synchronization. The following still require a GM and a player in the same room:
+CI does not prove real Owlbear interaction or synchronization. Test with one GM and at least one player in the same room:
 
-1. Left-top control panel opens and every visible control works.
-2. Toolbar hide / show registers and removes the right-side tool without affecting shared wall data.
-3. Free drawing places endpoints at the pointer position; grid mode snaps; Ctrl / Cmd temporarily bypasses grid.
-4. Select, line, polyline, rectangle, erase, property editing, undo and redo work.
-5. A player moving a CHARACTER token through a movement-blocking wall is corrected by the connected GM client.
-6. The same collision check works for MOUNT tokens, multiple wall segments, corners, and rapid repeated moves.
-7. Player clients receive local vision WALL projections but never GM helper lines.
-8. Scene reload, reconnect, and extension restart rebuild local projections without duplicates.
-9. No repeated success notifications occur during normal Beholder operations.
+1. Confirm the new Beholder movement tool appears in the right toolbar for both GM and player.
+2. Move a CHARACTER token with no Light attachment through a movement-blocking wall; it should stop at the wall edge during the drag.
+3. Repeat with a GM-created token and a player-created token. Neither should receive a role/creator exemption.
+4. Repeat with a MOUNT token.
+5. Verify a wall with `blocksMovement=false` does not constrain movement.
+6. Verify a wall with `blocksMovement=true` but `blocksVision=false` still blocks movement.
+7. Verify a PROP image is not treated as a character token.
+8. Move a token with Owlbear's native Select tool; the GM fallback should correct it after commit.
+9. Verify cancel / Escape / switching tools restores an in-progress movement to its original position.
+10. Test wall endpoints, corners, narrow passages, rapid dragging, scene reload, reconnect, and extension restart.
 
-Movement correction is post-commit and may briefly snap a token back. It is not a native pre-move lock or pathfinding implementation. Do not mark the movement system accepted until the live-room tests above pass.
+The dedicated tool is real-time local movement constrained by the shared wall geometry. Native Owlbear Select movement remains a post-commit fallback and may visibly snap back. Do not mark movement accepted until the live-room tests pass.

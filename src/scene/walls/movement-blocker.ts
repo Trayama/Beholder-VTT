@@ -1,9 +1,10 @@
 import { OBR } from "../../platform/obr.js";
-import type { LineItem, SceneItem, Vector2 } from "../../platform/obr.js";
+import type { SceneItem, Vector2 } from "../../platform/obr.js";
 import { logger } from "../../core/logger.js";
-import { constrainMovement, transformPoint } from "./geometry.js";
+import { constrainMovement } from "./geometry.js";
 import type { WallSegment2D } from "./geometry.js";
-import { isWallSource, readWallSourceMetadata } from "./model.js";
+import { getMovementWallSegments } from "./collision.js";
+import { isMovableToken } from "./model.js";
 
 interface TokenSnapshot {
   position: Vector2;
@@ -14,66 +15,61 @@ interface TokenSnapshot {
   scale: Vector2;
 }
 
-const ZERO: Vector2 = { x: 0, y: 0 };
-const UNIT: Vector2 = { x: 1, y: 1 };
-
 function sameVector(a: Vector2, b: Vector2): boolean {
   return Math.abs(a.x - b.x) < 0.001 && Math.abs(a.y - b.y) < 0.001;
 }
 
-function isMovableToken(item: SceneItem): boolean {
-  return item.type === "IMAGE" && (item.layer === "CHARACTER" || item.layer === "MOUNT");
-}
-
 /**
- * Independent movement collision.
+ * GM-authoritative fallback for movement performed with Owlbear's native tools.
  *
- * Only the GM client is authoritative. Owlbear's scene item change event
- * includes the full scene after a committed move, so the GM compares token
- * positions with the previous safe snapshot and corrects crossings from the
- * shared LINE wall geometry.
- *
- * This is deliberately separate from native WALL.blocking: that native flag
- * also affects light collision. Beholder keeps movement, vision and light
- * properties independent. The correction happens after Owlbear commits the
- * drag, so clients may see a brief snap-back; the SDK has no global
- * cancellable before-move hook for the native Select tool.
+ * The real-time TokenMovementTool is the preferred movement path. This watcher
+ * intentionally remains in place so native Select / other tools cannot leave
+ * a CHARACTER or MOUNT image token beyond a movement-blocking wall.
  */
 export class MovementBlocker {
   private readonly snapshots = new Map<string, TokenSnapshot>();
   private readonly unsubscribers: Array<() => void> = [];
   private disposed = false;
-  private processing = false;
   private pendingItems: SceneItem[] | null = null;
+  private queue: Promise<void> = Promise.resolve();
+  private refreshSequence = 0;
 
   async start(): Promise<void> {
     const role = await OBR.player.getRole();
     if (role !== "GM") {
-      logger.info("Movement collision is enforced by the GM client.");
+      logger.info("Native-tool movement fallback is enforced by the GM client.");
       return;
     }
 
     this.unsubscribers.push(
-      OBR.scene.items.onChange((items) => this.enqueue(items)),
+      // Always fetch the complete scene. The SDK event payload is not used as
+      // an authoritative full-scene snapshot by this module.
+      OBR.scene.items.onChange(() => {
+        void this.refreshScene();
+      }),
       OBR.scene.onReadyChange((ready) => {
         if (!ready) {
+          this.refreshSequence += 1;
           this.snapshots.clear();
           this.pendingItems = null;
           return;
         }
-        void OBR.scene.items.getItems().then((items) => this.enqueue(items)).catch((error) => {
-          logger.warn("Could not initialize wall movement snapshots.", error);
-        });
+        void this.refreshScene();
       }),
     );
 
     if (await OBR.scene.isReady()) {
-      this.enqueue(await OBR.scene.items.getItems());
+      await this.refreshScene();
     }
+    logger.info("GM native-tool movement fallback active.", {
+      monitoredLayers: ["CHARACTER", "MOUNT"],
+      lightRequired: false,
+    });
   }
 
   stop(): void {
     this.disposed = true;
+    this.refreshSequence += 1;
     this.pendingItems = null;
     for (const unsubscribe of this.unsubscribers.splice(0)) {
       try {
@@ -85,40 +81,31 @@ export class MovementBlocker {
     this.snapshots.clear();
   }
 
-  private enqueue(items: SceneItem[]): void {
-    if (this.disposed) return;
-    this.pendingItems = items;
-    if (!this.processing) void this.drain();
-  }
-
-  private async drain(): Promise<void> {
-    if (this.processing || this.disposed) return;
-    this.processing = true;
+  private async refreshScene(): Promise<void> {
+    const sequence = ++this.refreshSequence;
     try {
-      while (this.pendingItems && !this.disposed) {
-        const items = this.pendingItems;
-        this.pendingItems = null;
-        await this.process(items);
-      }
-    } finally {
-      this.processing = false;
-      if (this.pendingItems && !this.disposed) void this.drain();
+      if (!(await OBR.scene.isReady())) return;
+      const items = await OBR.scene.items.getItems();
+      if (this.disposed || sequence !== this.refreshSequence) return;
+      await this.enqueue(items);
+    } catch (error) {
+      logger.warn("Could not refresh the GM movement-blocker scene snapshot.", error);
     }
   }
 
-  private wallSegments(items: SceneItem[]): WallSegment2D[] {
-    const sources = items.filter(isWallSource) as LineItem[];
-    return sources.flatMap((source) => {
-      const metadata = readWallSourceMetadata(source);
-      if (!metadata?.blocking.blocksMovement) return [];
-      const position = source.position ?? ZERO;
-      const scale = source.scale ?? UNIT;
-      const rotation = source.rotation ?? 0;
-      return [{
-        start: transformPoint(source.startPosition, position, rotation, scale),
-        end: transformPoint(source.endPosition, position, rotation, scale),
-      }];
+  private enqueue(items: SceneItem[]): Promise<void> {
+    if (this.disposed) return Promise.resolve();
+    this.pendingItems = items;
+    this.queue = this.queue.then(async () => {
+      while (this.pendingItems && !this.disposed) {
+        const next = this.pendingItems;
+        this.pendingItems = null;
+        await this.process(next);
+      }
+    }).catch((error: unknown) => {
+      logger.error("Movement-blocker processing failed.", error);
     });
+    return this.queue;
   }
 
   private async capture(item: SceneItem): Promise<TokenSnapshot> {
@@ -151,7 +138,7 @@ export class MovementBlocker {
   private async process(items: SceneItem[]): Promise<void> {
     if (!(await OBR.scene.isReady())) return;
 
-    const walls = this.wallSegments(items);
+    const walls: WallSegment2D[] = getMovementWallSegments(items);
     const tokens = items.filter(isMovableToken);
     const presentIds = new Set(tokens.map((token) => token.id));
 
@@ -215,7 +202,7 @@ export class MovementBlocker {
             for (const draft of drafts) draft.position = correctedPosition;
           },
         );
-        logger.debug("Token movement corrected at wall boundary.", { itemId: token.id });
+        logger.debug("Native-tool token movement corrected at wall boundary.", { itemId: token.id });
       } catch (error) {
         this.snapshots.set(token.id, previous);
         logger.warn("A token could not be returned to its last safe position.", { itemId: token.id, error });

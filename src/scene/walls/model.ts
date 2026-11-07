@@ -43,6 +43,15 @@ function isBlocking(value: unknown): value is WallBlocking {
     typeof value.blocksLight === "boolean";
 }
 
+/**
+ * The movement system identifies tokens by Owlbear item type and layer only.
+ * It deliberately does not inspect Light attachments, player ownership or
+ * which client created the token.
+ */
+export function isMovableToken(item: SceneItem): boolean {
+  return item.type === "IMAGE" && (item.layer === "CHARACTER" || item.layer === "MOUNT");
+}
+
 export function createDefaultWallMetadata(wallId: string): WallSourceMetadata {
   return {
     schemaVersion: WALL_SCHEMA_VERSION,

@@ -130,6 +130,7 @@ export interface ToolDefinition {
   icons: ToolIcon[];
   defaultMode?: string;
   defaultMetadata?: Record<string, unknown>;
+  disabled?: { roles?: PlayerRole[] };
 }
 
 export interface ToolModeDefinition {
@@ -147,6 +148,9 @@ export interface ToolModeDefinition {
   onDeactivate?: (context: unknown) => void | Promise<void>;
 }
 
+export type ItemInteractionUpdate = (recipe: (draft: SceneItem) => void) => SceneItem;
+export type ItemInteraction = [update: ItemInteractionUpdate, stop: () => void];
+
 export interface OBRApi {
   onReady(callback: () => void): void;
   player: {
@@ -157,6 +161,9 @@ export interface OBRApi {
   };
   notification: {
     show(message: string, variant?: "DEFAULT" | "ERROR" | "INFO" | "SUCCESS" | "WARNING"): Promise<string>;
+  };
+  interaction: {
+    startItemInteraction(item: SceneItem): Promise<ItemInteraction>;
   };
   tool: {
     create(tool: ToolDefinition): Promise<void>;
@@ -175,7 +182,7 @@ export interface OBRApi {
       snapPosition(position: Vector2, sensitivity?: number, useCorners?: boolean, useCenter?: boolean): Promise<Vector2>;
     };
     items: {
-      getItems(filter?: (item: SceneItem) => boolean): Promise<SceneItem[]>;
+      getItems(filter?: string[] | ((item: SceneItem) => boolean)): Promise<SceneItem[]>;
       addItems(items: SceneItem[]): Promise<void>;
       updateItems(filterOrItems: SceneItem[] | ((item: SceneItem) => boolean), update: (drafts: SceneItem[]) => void): Promise<void>;
       deleteItems(ids: string[]): Promise<void>;

@@ -2,7 +2,7 @@
 
 面向 Owlbear Rodeo 的轻量化、模块化、规则无关 TRPG 桌面增强扩展。它不替换 Owlbear 的房间、地图和场景系统，而是在其上提供地图构造、角色、战斗与演出模块。
 
-**当前版本：0.0.6（开发预览）**  
+**当前版本：0.0.7（开发预览）**  
 **许可证：GPL-3.0-only**
 
 ## 安装
@@ -13,7 +13,7 @@
 
 由 GitHub Actions 自动构建并部署到 GitHub Pages。当前开发预览从 `develop` 分支部署。
 
-## 0.0.6 当前功能
+## 0.0.7 当前功能
 
 ### 左上角总控面板
 
@@ -33,6 +33,7 @@
 - 整条墙体橡皮擦。
 - 自由定位为默认方式；可切换网格吸附。绘制时按住 Ctrl / Cmd 可临时绕过网格。
 - 端点吸附独立于网格吸附。
+- 新增「Beholder VTT · 墙体感知移动」工具，GM 与玩家均可使用。
 
 ### 墙体与空间数据
 
@@ -47,18 +48,18 @@
 
 共享 `LINE` 是墙体几何的唯一权威数据。本地 `WALL` 只是可重建的视野投影；Fog 或 Light 不拥有墙体数据，也不负责墙体编辑生命周期。
 
-Owlbear 原生 `WALL.blocking` 同时影响 Token 与 Light 的碰撞，因此 Beholder 不用它实现独立移动阻挡。当前本地 WALL 投影保持原生 blocking 关闭；移动阻挡由独立的 GM 端碰撞模块读取共享 LINE 数据处理。
+Owlbear 原生 `WALL.blocking` 同时影响 Token 与 Light 的碰撞，因此 Beholder 不用它实现独立移动阻挡。本地 WALL 投影保持原生 blocking 关闭；移动阻挡只读取共享 LINE 数据。
 
-### 移动阻挡的当前实现边界
+### 移动阻挡
 
-- GM 客户端是唯一碰撞纠正端。
-- GM 监听共享场景中的 CHARACTER / MOUNT 图像棋子位置变化。
-- 穿越启用 `blocksMovement` 的墙体时，将棋子纠正到最后安全位置。
-- 这是 Owlbear 原生拖动提交后的纠正，可能出现短暂回弹；不是拖动前拦截，也不是路径预览 / 寻路系统。
-- GM 必须保持连接，移动纠正才会持续生效。
-- 端点圆形碰撞近似仍需在真实房间中验证。
+- 角色 Token 按 Owlbear 的 IMAGE + CHARACTER / MOUNT 图层识别。
+- 是否附着 Light、Token 由 GM 还是玩家创建，都不影响移动阻挡。
+- 使用右侧「Beholder VTT · 墙体感知移动」工具时，客户端通过 Owlbear Interaction API 实时预览和更新移动位置，并在每次拖动更新时计算移动碰撞。
+- 使用 Owlbear 原生 Select 等其他工具移动时，GM 客户端保留提交后纠正机制作为兜底，可能出现短暂回弹。
+- 普通 PROP / DRAWING 图像不纳入角色 Token 碰撞，继续保留原生移动方式。
+- 这是直线移动碰撞，不是绕墙寻路；端点、狭窄通道、多墙角和快速拖动仍需真实房间验收。
 
-`blocksVision` 由本地 WALL 投影处理。`blocksLight` 目前只独立保存，尚未接入动态光照适配器。
+`blocksVision` 由本地 WALL 投影处理。 `blocksLight` 目前只独立保存，尚未接入动态光照适配器。
 
 ## 旧版 WallBrush
 

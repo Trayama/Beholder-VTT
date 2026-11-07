@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   createDefaultWallMetadata,
   isLocalWall,
+  isMovableToken,
   isWallSource,
   LOCAL_WALL_KEY,
   readWallSourceMetadata,
@@ -73,4 +74,34 @@ test("local projection marker is distinct from the shared source marker", () => 
     },
   };
   assert.equal(isLocalWall(item), true);
+});
+
+test("CHARACTER tokens are movement-blocked without any Light attachment", () => {
+  const token = {
+    ...baseItem,
+    id: "character-token",
+    type: "IMAGE",
+    layer: "CHARACTER",
+    createdUserId: "gm-player-id",
+  };
+  assert.equal("light" in token, false);
+  assert.equal(isMovableToken(token), true);
+});
+
+test("MOUNT tokens are movement-blocked independently of creator identity", () => {
+  const token = {
+    ...baseItem,
+    id: "mount-token",
+    type: "IMAGE",
+    layer: "MOUNT",
+    createdUserId: "player-id",
+  };
+  assert.equal(isMovableToken(token), true);
+});
+
+test("non-token image layers keep their native Owlbear movement", () => {
+  const prop = { ...baseItem, type: "IMAGE", layer: "PROP" };
+  const drawing = { ...baseItem, type: "IMAGE", layer: "DRAWING" };
+  assert.equal(isMovableToken(prop), false);
+  assert.equal(isMovableToken(drawing), false);
 });
