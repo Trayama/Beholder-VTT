@@ -13,7 +13,15 @@ import {
   isWallSource,
   WALL_AWARE_MOVE_KEY,
 } from "./model.js";
-import { isNativeMoveTool, NATIVE_MOVE_TOOL_ID } from "./movement-tool-utils.js";
+import {
+  getNativeMoveModeId,
+  HIDDEN_TOOL_FILTER_ID,
+  isNativeMoveTool,
+  NATIVE_MOVE_COLLISION_MODE_ID,
+  NATIVE_MOVE_PASSTHROUGH_MODE_ID,
+  NATIVE_MOVE_TOOL_ID,
+  shouldDelegateNativeMove,
+} from "./movement-tool-utils.js";
 
 const TOOL_ID = "com.beholder-vtt/token-movement";
 const MOVE_MODE_ID = TOOL_ID + "/move";
@@ -81,7 +89,9 @@ export class TokenMovementTool {
   private marqueeAdditive = false;
   private groupMovement = true;
   private takeoverNativeMove = true;
-  private redirecting = false;
+  private nativeModesRegistered = false;
+  private switchingNativeMode = false;
+  private requestedNativeMode: string | null = null;
   private storageHandler: ((event: StorageEvent) => void) | null = null;
   private unsubscribeTool: (() => void) | null = null;
 
@@ -149,12 +159,13 @@ export class TokenMovementTool {
       window.addEventListener("storage", this.storageHandler);
       this.unsubscribeTool = OBR.tool.onToolChange((toolId) => this.handleToolChange(toolId));
 
+      await this.registerNativeMoveModes();
       logger.info("Beholder Select + Move tool registered.", {
         groupMovement: this.groupMovement,
-        takeoverNativeMove: this.takeoverNativeMove,
+        nativeMoveTakeover: this.takeoverNativeMove,
+        nativeMoveModeRegistered: this.nativeModesRegistered,
       });
-
-      await this.enforceNativeMoveTakeover();
+      await this.syncNativeMoveMode();
     } catch (error) {
       await this.removeRegistrations();
       logger.error("Beholder Select + Move tool registration failed.", error);
@@ -172,10 +183,127 @@ export class TokenMovementTool {
   }
 
   private async removeRegistrations(): Promise<void> {
+    await this.removeNativeMoveModes();
     try { await OBR.tool.removeAction(SETTINGS_ACTION_ID); } catch { /* not registered */ }
     try { await OBR.tool.removeMode(MOVE_MODE_ID); } catch { /* not registered */ }
     try { await OBR.tool.remove(TOOL_ID); } catch { /* not registered */ }
     this.registered = false;
+  }
+
+  private async registerNativeMoveModes(): Promise<void> {
+    if (this.nativeModesRegistered) return;
+
+    const icon = new URL("./icons/move-token.svg", window.location.href).toString();
+    const hiddenIcon = {
+      icon,
+      label: "Beholder VTT · 原生 Move 墙体感知",
+      filter: { activeTools: [HIDDEN_TOOL_FILTER_ID] },
+    };
+
+    try {
+      // Remove stale registrations left by an interrupted extension reload.
+      try { await OBR.tool.removeMode(NATIVE_MOVE_PASSTHROUGH_MODE_ID); } catch { /* absent */ }
+      try { await OBR.tool.removeMode(NATIVE_MOVE_COLLISION_MODE_ID); } catch { /* absent */ }
+
+      await OBR.tool.createMode({
+        id: NATIVE_MOVE_COLLISION_MODE_ID,
+        icons: [hiddenIcon],
+        preventDrag: {
+          target: [
+            { key: "layer", value: "CHARACTER", operator: "!=", coordinator: "&&" },
+            { key: "layer", value: "MOUNT", operator: "!=", coordinator: "&&" },
+          ],
+        },
+        onToolDown: (_context, event) => this.handleNativeMovePointerDown(event),
+        onToolClick: (_context, event) => this.handleClick(event),
+        onToolDragStart: (_context, event) => this.begin(event),
+        onToolDragMove: (_context, event) => this.move(event.pointerPosition),
+        onToolDragEnd: (_context, event) => this.end(event),
+        onToolDragCancel: () => this.cancel(),
+        onDeactivate: () => this.cancel(),
+      });
+
+      // This mode leaves Owlbear's native Move interactions untouched. It is
+      // used for props/maps, empty-space marquee selection, transform handles,
+      // and whenever the user disables Beholder's native Move takeover.
+      await OBR.tool.createMode({
+        id: NATIVE_MOVE_PASSTHROUGH_MODE_ID,
+        icons: [{
+          ...hiddenIcon,
+          label: "Beholder VTT · 原生 Move 委托",
+        }],
+        preventDrag: {},
+        onToolUp: () => { void this.restoreNativeMoveMode(); },
+        onToolDragEnd: () => { void this.restoreNativeMoveMode(); },
+        onToolDragCancel: () => { void this.restoreNativeMoveMode(); },
+      });
+
+      this.nativeModesRegistered = true;
+      logger.info("Beholder modes registered for Owlbear's native Move tool.", {
+        nativeToolId: NATIVE_MOVE_TOOL_ID,
+        collisionModeId: NATIVE_MOVE_COLLISION_MODE_ID,
+        passthroughModeId: NATIVE_MOVE_PASSTHROUGH_MODE_ID,
+      });
+    } catch (error) {
+      try { await OBR.tool.removeMode(NATIVE_MOVE_PASSTHROUGH_MODE_ID); } catch { /* absent */ }
+      try { await OBR.tool.removeMode(NATIVE_MOVE_COLLISION_MODE_ID); } catch { /* absent */ }
+      this.nativeModesRegistered = false;
+      logger.warn("Could not attach Beholder modes to Owlbear's native Move tool; standalone movement remains available.", error);
+    }
+  }
+
+  private async removeNativeMoveModes(): Promise<void> {
+    this.cancel();
+    this.requestedNativeMode = null;
+    try { await OBR.tool.removeMode(NATIVE_MOVE_PASSTHROUGH_MODE_ID); } catch { /* absent */ }
+    try { await OBR.tool.removeMode(NATIVE_MOVE_COLLISION_MODE_ID); } catch { /* absent */ }
+    this.nativeModesRegistered = false;
+  }
+
+  private handleNativeMovePointerDown(event: ToolEvent): void {
+    if (shouldDelegateNativeMove(event)) {
+      void this.activateNativeMoveMode(NATIVE_MOVE_PASSTHROUGH_MODE_ID);
+    }
+  }
+
+  private async syncNativeMoveMode(): Promise<void> {
+    if (!this.registered || !this.nativeModesRegistered) return;
+    const activeTool = await OBR.tool.getActiveTool().catch(() => "");
+    if (!isNativeMoveTool(activeTool)) return;
+    await this.activateNativeMoveMode(getNativeMoveModeId(this.takeoverNativeMove));
+  }
+
+  private async activateNativeMoveMode(modeId: string): Promise<void> {
+    if (!this.nativeModesRegistered) return;
+    this.requestedNativeMode = modeId;
+    if (this.switchingNativeMode) return;
+
+    this.switchingNativeMode = true;
+    try {
+      while (this.requestedNativeMode) {
+        const requestedMode = this.requestedNativeMode;
+        this.requestedNativeMode = null;
+
+        const activeTool = await OBR.tool.getActiveTool().catch(() => "");
+        if (!isNativeMoveTool(activeTool)) continue;
+
+        const activeMode = await OBR.tool.getActiveToolMode().catch(() => undefined);
+        if (activeMode !== requestedMode) {
+          await OBR.tool.activateMode(NATIVE_MOVE_TOOL_ID, requestedMode);
+        }
+      }
+    } catch (error) {
+      logger.warn("Could not switch the active mode of Owlbear's native Move tool.", {
+        modeId,
+        error,
+      });
+    } finally {
+      this.switchingNativeMode = false;
+    }
+  }
+
+  private async restoreNativeMoveMode(): Promise<void> {
+    await this.syncNativeMoveMode();
   }
 
   private handleStorageChange(event: StorageEvent): void {
@@ -183,39 +311,17 @@ export class TokenMovementTool {
       this.groupMovement = event.newValue !== "false";
     } else if (event.key === PREFERENCES.movementTakeover) {
       this.takeoverNativeMove = event.newValue !== "false";
-      if (this.takeoverNativeMove) void this.enforceNativeMoveTakeover();
+      void this.syncNativeMoveMode();
     }
   }
 
   private handleToolChange(toolId: string): void {
-    if (isNativeMoveTool(toolId) && this.takeoverNativeMove) {
+    if (isNativeMoveTool(toolId)) {
       this.cancel();
-      void this.redirectNativeMove();
+      void this.syncNativeMoveMode();
       return;
     }
     if (toolId !== TOOL_ID) this.cancel();
-  }
-
-  private async enforceNativeMoveTakeover(): Promise<void> {
-    if (!this.registered || !this.takeoverNativeMove) return;
-    const activeTool = await OBR.tool.getActiveTool().catch(() => "");
-    if (isNativeMoveTool(activeTool)) await this.redirectNativeMove();
-  }
-
-  private async redirectNativeMove(): Promise<void> {
-    if (!this.registered || this.redirecting || !this.takeoverNativeMove) return;
-    this.redirecting = true;
-    try {
-      await OBR.tool.activateTool(TOOL_ID);
-      logger.debug("Owlbear native Move selection redirected to Beholder.");
-    } catch (error) {
-      logger.warn("Could not redirect Owlbear native Move to Beholder.", {
-        nativeToolId: NATIVE_MOVE_TOOL_ID,
-        error,
-      });
-    } finally {
-      this.redirecting = false;
-    }
   }
 
   private async handleClick(event: ToolEvent): Promise<boolean> {

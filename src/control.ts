@@ -40,8 +40,8 @@ toolbarToggle?.addEventListener("click", () => {
 movementTakeover?.addEventListener("change", () => {
   writeBooleanPreference(PREFERENCES.movementTakeover, movementTakeover.checked);
   setStatus(movementTakeover.checked
-    ? "原生 Move 接管已开启。点击原生 Move 会切回 Beholder 选择与移动。"
-    : "原生 Move 接管已关闭。可使用 Owlbear 原生变换；GM 墙体阻挡纠正仍然有效。");
+    ? "原生 Move 接管已开启：官方工具入口保留，角色 Token 拖动由 Beholder 实时检测墙体。"
+    : "原生 Move 接管已关闭：官方 Move 恢复原生交互；Beholder 独立移动工具仍可使用。");
 });
 
 function updateSceneStats(items: Awaited<ReturnType<typeof OBR.scene.items.getItems>>): void {
