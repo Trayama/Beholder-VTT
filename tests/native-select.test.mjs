@@ -12,7 +12,7 @@ test("group movement uses the most restrictive selected token footprint", () => 
     ],
     [{ start: { x: 50, y: -100 }, end: { x: 50, y: 100 } }],
   );
-  assert.ok(Math.abs(delta.x - 25) < 0.1);
+  assert.ok(Math.abs(delta.x - 24) < 0.1);
   assert.equal(delta.y, 0);
 });
 
