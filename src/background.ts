@@ -9,7 +9,7 @@ registry.register(new WallsModule());
 OBR.onReady(async () => {
   try {
     const role = await OBR.player.getRole();
-    logger.info("Owlbear SDK ready.", { role, version: "0.0.1" });
+    logger.info("Owlbear SDK ready.", { role, version: "0.0.2" });
     await registry.startAll();
     await OBR.notification.show(
       role === "GM"
