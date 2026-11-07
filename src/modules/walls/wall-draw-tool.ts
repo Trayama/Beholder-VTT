@@ -26,7 +26,7 @@ const PROPERTIES_POPOVER_ID = "com.beholder-vtt/wall-properties";
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
 const MODE_IDS = [DRAW_MODE_ID, POLYLINE_MODE_ID, RECTANGLE_MODE_ID, SELECT_MODE_ID, ERASE_MODE_ID];
-const ACTION_IDS = [PROPERTIES_ACTION_ID, SNAP_ACTION_ID, GUIDES_ACTION_ID, UNDO_ACTION_ID, REDO_ACTION_ID, CLEAR_ACTION_ID, FINISH_ACTION_ID];
+const ACTION_IDS = [PROPERTIES_ACTION_ID];
 
 interface WallHit {
   source: LineItem;
@@ -64,7 +64,8 @@ export class WallDrawTool {
   private clearArmedUntil = 0;
   private toolbarVisible = false;
   private registered = false;
-  private snapToGrid = true;
+  private snapToGrid = false;
+  private snapToEndpoints = true;
   private storageHandler: ((event: StorageEvent) => void) | null = null;
 
   constructor(reconciler: WallReconciler) {
@@ -72,7 +73,8 @@ export class WallDrawTool {
   }
 
   async start(): Promise<void> {
-    this.snapToGrid = readBooleanPreference(PREFERENCES.snap, true);
+    this.snapToGrid = readBooleanPreference(PREFERENCES.snap, false);
+    this.snapToEndpoints = readBooleanPreference(PREFERENCES.endpointSnap, true);
     this.reconciler.setGuidesVisible(readBooleanPreference(PREFERENCES.guides, true));
     this.storageHandler = (event) => this.handleStorageChange(event);
     window.addEventListener("storage", this.storageHandler);
@@ -96,7 +98,9 @@ export class WallDrawTool {
         logger.error("Toolbar visibility update failed.", error);
       });
     } else if (event.key === PREFERENCES.snap) {
-      this.snapToGrid = event.newValue !== "false";
+      this.snapToGrid = event.newValue === "true";
+    } else if (event.key === PREFERENCES.endpointSnap) {
+      this.snapToEndpoints = event.newValue !== "false";
     } else if (event.key === PREFERENCES.guides) {
       this.reconciler.setGuidesVisible(event.newValue !== "false");
     }
@@ -113,15 +117,15 @@ export class WallDrawTool {
         id: TOOL_ID,
         icons: [{
           icon: this.asset("icon.svg"),
-          label: "Beholder VTT · 地图构造",
+          label: "Beholder VTT · 墙体编辑器",
           filter: { roles: ["GM"] },
         }],
+        defaultMode: SELECT_MODE_ID,
         defaultMetadata: { snapToGrid: this.snapToGrid, selectedWallId: null },
       });
       this.registered = true;
       await this.registerModes();
       await this.registerActions();
-      await OBR.notification.show("Beholder VTT：地图构造工具已加载。", "SUCCESS");
     } catch (error) {
       await this.removeToolbarRegistrations();
       logger.error("Wall editor registration failed.", error);
@@ -153,35 +157,7 @@ export class WallDrawTool {
       });
     };
 
-    await createMode(DRAW_MODE_ID, "draw.svg", "直线绘制（拖动）", {
-      onToolDragStart: async (_context, event) => this.startLine(event),
-      onToolDragMove: async (_context, event) => this.moveLine(event),
-      onToolDragEnd: async (_context, event) => this.endLine(event),
-      onToolDragCancel: async () => this.cancelLine(),
-      onDeactivate: async () => this.cancelLine(),
-    });
-
-    await createMode(POLYLINE_MODE_ID, "polyline.svg", "连续折线（点击添加节点，双击或点完成）", {
-      onToolClick: async (_context, event) => this.addPolylinePoint(event),
-      onToolMove: async (_context, event) => this.movePolylinePreview(event),
-      onToolDoubleClick: async (_context, event) => {
-        await this.addPolylinePoint(event);
-        await this.finishPolyline();
-        return false;
-      },
-      onToolDragCancel: async () => this.cancelPolyline(),
-      onDeactivate: async () => this.cancelPolyline(),
-    });
-
-    await createMode(RECTANGLE_MODE_ID, "rectangle.svg", "矩形墙体（拖动）", {
-      onToolDragStart: async (_context, event) => this.startRectangle(event),
-      onToolDragMove: async (_context, event) => this.moveRectangle(event),
-      onToolDragEnd: async (_context, event) => this.endRectangle(event),
-      onToolDragCancel: async () => this.cancelRectangle(),
-      onDeactivate: async () => this.cancelRectangle(),
-    });
-
-    await createMode(SELECT_MODE_ID, "select.svg", "选择、移动墙体或拖动节点", {
+    await createMode(SELECT_MODE_ID, "select.svg", "选择 / 移动 / 编辑节点", {
       onToolClick: async (_context, event) => {
         await this.selectWallAt(event.pointerPosition);
         return false;
@@ -193,7 +169,35 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelEdit(),
     });
 
-    await createMode(ERASE_MODE_ID, "erase.svg", "橡皮擦（点击整条墙体）", {
+    await createMode(DRAW_MODE_ID, "draw.svg", "直线墙体（拖动）", {
+      onToolDragStart: async (_context, event) => this.startLine(event),
+      onToolDragMove: async (_context, event) => this.moveLine(event),
+      onToolDragEnd: async (_context, event) => this.endLine(event),
+      onToolDragCancel: async () => this.cancelLine(),
+      onDeactivate: async () => this.cancelLine(),
+    });
+
+    await createMode(POLYLINE_MODE_ID, "polyline.svg", "连续折线（点击节点，双击完成）", {
+      onToolClick: async (_context, event) => this.addPolylinePoint(event),
+      onToolMove: async (_context, event) => this.movePolylinePreview(event),
+      onToolDoubleClick: async (_context, event) => {
+        await this.addPolylinePoint(event);
+        await this.finishPolyline();
+        return false;
+      },
+      onToolDragCancel: async () => this.cancelPolyline(),
+      onDeactivate: async () => this.cancelPolyline(),
+    });
+
+    await createMode(RECTANGLE_MODE_ID, "rectangle.svg", "矩形房间（拖动）", {
+      onToolDragStart: async (_context, event) => this.startRectangle(event),
+      onToolDragMove: async (_context, event) => this.moveRectangle(event),
+      onToolDragEnd: async (_context, event) => this.endRectangle(event),
+      onToolDragCancel: async () => this.cancelRectangle(),
+      onDeactivate: async () => this.cancelRectangle(),
+    });
+
+    await createMode(ERASE_MODE_ID, "erase.svg", "删除整条墙体（点击）", {
       onToolClick: async (_context, event) => {
         await this.eraseAt(event.pointerPosition);
         return false;
@@ -202,42 +206,45 @@ export class WallDrawTool {
   }
 
   private async registerActions(): Promise<void> {
-    const filter = { activeTools: [TOOL_ID], roles: ["GM" as const] };
-    const addAction = async (
-      id: string,
-      icon: string,
-      label: string,
-      onClick: (elementId: string) => void | Promise<void>,
-      activeModes?: string[],
-    ) => {
-      await OBR.tool.createAction({
-        id,
-        icons: [{
-          icon: this.asset("icons/" + icon),
-          label,
-          filter: activeModes ? { ...filter, activeModes } : filter,
-        }],
-        onClick: async (_context, elementId) => onClick(elementId),
-      });
-    };
-
-    await addAction(PROPERTIES_ACTION_ID, "select.svg", "编辑选中墙体属性", (elementId) => this.openProperties(elementId));
-    await addAction(SNAP_ACTION_ID, "rectangle.svg", "切换网格吸附", () => this.toggleSnap());
-    await addAction(GUIDES_ACTION_ID, "polyline.svg", "显示/隐藏 GM 辅助线", () => this.toggleGuides());
-    await addAction(UNDO_ACTION_ID, "draw.svg", "撤销", () => this.undo());
-    await addAction(REDO_ACTION_ID, "erase.svg", "重做", () => this.redo());
-    await addAction(CLEAR_ACTION_ID, "erase.svg", "清空墙体（需二次确认）", () => this.clearWalls());
-    await addAction(FINISH_ACTION_ID, "polyline.svg", "完成当前折线", () => this.finishPolyline(), [POLYLINE_MODE_ID]);
+    const filter = { activeTools: [TOOL_ID], activeModes: [SELECT_MODE_ID], roles: ["GM" as const] };
+    await OBR.tool.createAction({
+      id: PROPERTIES_ACTION_ID,
+      icons: [{
+        icon: this.asset("icons/properties.svg"),
+        label: "编辑选中墙体属性",
+        filter,
+      }],
+      onClick: async (_context, elementId) => this.openProperties(elementId),
+    });
   }
 
-  private async snap(point: Vector2): Promise<Vector2> {
-    if (!this.snapToGrid) return point;
-    try {
-      return await OBR.scene.grid.snapPosition(point, 1, true, false);
-    } catch (error) {
-      logger.warn("Grid snapping failed; using pointer position.", error);
-      return point;
+  private async snap(point: Vector2, allowEndpointSnap = false): Promise<Vector2> {
+    let snapped = point;
+    if (this.snapToGrid) {
+      try {
+        snapped = await OBR.scene.grid.snapPosition(point, 1, true, false);
+      } catch (error) {
+        logger.warn("Grid snapping failed; using pointer position.", error);
+      }
     }
+
+    if (!allowEndpointSnap || !this.snapToEndpoints) return snapped;
+    const scale = Math.max(await OBR.viewport.getScale().catch(() => 1), 0.1);
+    const tolerance = 14 / scale;
+    const sources = await this.allWallSources();
+    let nearest: Vector2 | null = null;
+    let nearestDistance = tolerance;
+    for (const source of sources) {
+      const segment = this.worldSegment(source);
+      for (const endpoint of [segment.start, segment.end]) {
+        const distance = Math.hypot(snapped.x - endpoint.x, snapped.y - endpoint.y);
+        if (distance <= nearestDistance) {
+          nearest = endpoint;
+          nearestDistance = distance;
+        }
+      }
+    }
+    return nearest ?? snapped;
   }
 
   private previewLine(start: Vector2, end: Vector2, color = "#d85b64") {
@@ -294,14 +301,13 @@ export class WallDrawTool {
       throw new Error("共享墙体已保存，但至少一个本地阻挡墙未生成。");
     }
     const first = sources[0];
-    await OBR.notification.show("已保存 " + sources.length + " 段墙体。", "SUCCESS");
     logger.info("Wall geometry saved.", { wallId: first ? readWallSourceMetadata(first)?.wallId : null, segments: sources.length });
   }
 
   private async startLine(event: ToolEvent): Promise<void> {
     await this.cancelLine();
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return;
-    const start = await this.snap(event.pointerPosition);
+    const start = await this.snap(event.pointerPosition, true);
     this.dragStart = start;
     const preview = this.previewLine(start, start);
     await OBR.scene.local.addItems([preview]);
@@ -310,7 +316,7 @@ export class WallDrawTool {
 
   private async moveLine(event: ToolEvent): Promise<void> {
     if (!this.dragStart || !this.linePreviewId) return;
-    const end = await this.snap(event.pointerPosition);
+    const end = await this.snap(event.pointerPosition, true);
     await this.updatePreviewLines([this.linePreviewId], [{ start: this.dragStart, end }]);
   }
 
@@ -318,7 +324,7 @@ export class WallDrawTool {
     const start = this.dragStart;
     this.dragStart = null;
     if (!start) return;
-    const end = await this.snap(event.pointerPosition);
+    const end = await this.snap(event.pointerPosition, true);
     const id = this.linePreviewId;
     this.linePreviewId = null;
     if (id) await this.removePreviews([id]);
@@ -338,7 +344,7 @@ export class WallDrawTool {
 
   private async addPolylinePoint(event: ToolEvent): Promise<boolean> {
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return false;
-    const point = await this.snap(event.pointerPosition);
+    const point = await this.snap(event.pointerPosition, true);
     const last = this.polylinePoints[this.polylinePoints.length - 1];
     if (last && Math.hypot(point.x - last.x, point.y - last.y) < 4) return false;
     if (last && this.livePolylinePreviewId) {
@@ -355,7 +361,7 @@ export class WallDrawTool {
   private async movePolylinePreview(event: ToolEvent): Promise<void> {
     const point = this.polylinePoints[this.polylinePoints.length - 1];
     if (!point || !this.livePolylinePreviewId) return;
-    const end = await this.snap(event.pointerPosition);
+    const end = await this.snap(event.pointerPosition, true);
     await this.updatePreviewLines([this.livePolylinePreviewId], [{ start: point, end }]);
   }
 
@@ -363,7 +369,6 @@ export class WallDrawTool {
     const points = [...this.polylinePoints];
     await this.cancelPolyline();
     if (points.length < 2) {
-      await OBR.notification.show("至少添加两个节点才能完成折线。", "INFO");
       return;
     }
     try { await this.saveWall(points); } catch (error) {
@@ -386,7 +391,7 @@ export class WallDrawTool {
   private async startRectangle(event: ToolEvent): Promise<void> {
     await this.cancelRectangle();
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return;
-    this.dragStart = await this.snap(event.pointerPosition);
+    this.dragStart = await this.snap(event.pointerPosition, true);
     const points = this.rectanglePoints(this.dragStart, this.dragStart);
     const previews = points.slice(0, 4).map((point, index) => this.previewLine(point, points[index + 1]!));
     await OBR.scene.local.addItems(previews);
@@ -395,7 +400,7 @@ export class WallDrawTool {
 
   private async moveRectangle(event: ToolEvent): Promise<void> {
     if (!this.dragStart || this.rectanglePreviewIds.length !== 4) return;
-    const end = await this.snap(event.pointerPosition);
+    const end = await this.snap(event.pointerPosition, true);
     const points = this.rectanglePoints(this.dragStart, end);
     const segments = points.slice(0, 4).map((point, index) => ({ start: point, end: points[index + 1]! }));
     await this.updatePreviewLines(this.rectanglePreviewIds, segments);
@@ -405,7 +410,7 @@ export class WallDrawTool {
     const start = this.dragStart;
     this.dragStart = null;
     if (!start) return;
-    const end = await this.snap(event.pointerPosition);
+    const end = await this.snap(event.pointerPosition, true);
     await this.cancelRectangle();
     if (Math.abs(end.x - start.x) < 4 || Math.abs(end.y - start.y) < 4) return;
     try { await this.saveWall(this.rectanglePoints(start, end)); } catch (error) {
@@ -476,7 +481,6 @@ export class WallDrawTool {
     const metadata = hit ? readWallSourceMetadata(hit.source) : null;
     await this.setSelection(metadata?.wallId ?? null);
     if (metadata) {
-      await OBR.notification.show("已选择墙体（" + metadata.segmentCount + " 段）。拖动墙线可移动，拖动端点可调整节点。", "INFO");
     }
   }
 
@@ -545,7 +549,7 @@ export class WallDrawTool {
   private async moveEdit(event: ToolEvent): Promise<void> {
     const session = this.editSession;
     if (!session) return;
-    const pointer = await this.snap(event.pointerPosition);
+    const pointer = await this.snap(event.pointerPosition, true);
     const geometry = this.editedGeometry(session, pointer);
     const segments = session.sources.map((source) => geometry.get(source.id) ?? {
       start: source.startPosition,
@@ -558,7 +562,7 @@ export class WallDrawTool {
     const session = this.editSession;
     this.editSession = null;
     if (!session) return;
-    const pointer = await this.snap(event.pointerPosition);
+    const pointer = await this.snap(event.pointerPosition, true);
     const geometry = this.editedGeometry(session, pointer);
     await this.removePreviews(session.previewIds);
     const delta = Math.hypot(pointer.x - session.anchor.x, pointer.y - session.anchor.y);
@@ -584,7 +588,6 @@ export class WallDrawTool {
       );
       await this.reconciler.schedule("wall-edited");
       await this.setSelection(session.wallId);
-      await OBR.notification.show(session.mode === "move" ? "墙体已移动。" : "墙体节点已调整。", "SUCCESS");
     } catch (error) {
       logger.error("Wall edit failed.", error);
       await OBR.notification.show("墙体编辑失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
@@ -609,7 +612,6 @@ export class WallDrawTool {
     await OBR.scene.items.deleteItems(group.map((source) => source.id));
     if (this.selectedWallId === metadata.wallId) await this.setSelection(null);
     await this.reconciler.schedule("wall-erased");
-    await OBR.notification.show("已删除整条墙体。", "SUCCESS");
   }
 
   private async openProperties(elementId: string): Promise<void> {
@@ -630,14 +632,12 @@ export class WallDrawTool {
     this.snapToGrid = !this.snapToGrid;
     writeBooleanPreference(PREFERENCES.snap, this.snapToGrid);
     if (this.registered) await OBR.tool.setMetadata(TOOL_ID, { snapToGrid: this.snapToGrid });
-    await OBR.notification.show(this.snapToGrid ? "网格吸附已开启。" : "网格吸附已关闭。", "SUCCESS");
   }
 
   private async toggleGuides(): Promise<void> {
     const visible = !readBooleanPreference(PREFERENCES.guides, true);
     writeBooleanPreference(PREFERENCES.guides, visible);
     this.reconciler.setGuidesVisible(visible);
-    await OBR.notification.show(visible ? "GM 墙体辅助线已显示。" : "GM 墙体辅助线已隐藏。", "SUCCESS");
   }
 
   private async undo(): Promise<void> {
@@ -645,7 +645,6 @@ export class WallDrawTool {
       if (await OBR.scene.history.canUndo()) await OBR.scene.history.undo();
     } catch (error) {
       logger.warn("Undo is unavailable.", error);
-      await OBR.notification.show("当前没有可撤销的场景操作。", "INFO");
     }
   }
 
@@ -654,7 +653,6 @@ export class WallDrawTool {
       if (await OBR.scene.history.canRedo()) await OBR.scene.history.redo();
     } catch (error) {
       logger.warn("Redo is unavailable.", error);
-      await OBR.notification.show("当前没有可重做的场景操作。", "INFO");
     }
   }
 
@@ -668,13 +666,11 @@ export class WallDrawTool {
     this.clearArmedUntil = 0;
     const sources = await this.allWallSources();
     if (!sources.length) {
-      await OBR.notification.show("当前场景没有 Beholder 墙体。", "INFO");
       return;
     }
     await OBR.scene.items.deleteItems(sources.map((source) => source.id));
     await this.setSelection(null);
     await this.reconciler.schedule("walls-cleared");
-    await OBR.notification.show("已清空 " + sources.length + " 段墙体。", "SUCCESS");
   }
 
   private async cancelAllInteractions(): Promise<void> {

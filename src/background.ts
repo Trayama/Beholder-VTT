@@ -9,14 +9,8 @@ registry.register(new WallsModule());
 OBR.onReady(async () => {
   try {
     const role = await OBR.player.getRole();
-    logger.info("Owlbear SDK ready.", { role, version: "0.0.4" });
+    logger.info("Owlbear SDK ready.", { role, version: "0.0.5" });
     await registry.startAll();
-    await OBR.notification.show(
-      role === "GM"
-        ? "Beholder VTT 开发版已加载。可使用工具栏的墙体绘制工具。"
-        : "Beholder VTT 已连接，正在同步场景墙体。",
-      "SUCCESS",
-    );
   } catch (error) {
     logger.error("Extension startup failed.", error);
     await OBR.notification.show(

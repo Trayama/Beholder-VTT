@@ -127,18 +127,24 @@ export class WallReconciler {
     const nextExpectedIds = new Set<string>();
 
     for (const source of sources) {
+      const metadata = readWallSourceMetadata(source);
       const candidates = localBySource.get(source.id) ?? [];
-      const existing = candidates.shift();
 
-      if (!existing) {
-        additions.push(createLocalWall(source));
-      } else {
-        nextExpectedIds.add(existing.id);
-        if (!sourceMatchesProjection(source, existing)) {
-          updates.push({ current: existing, source });
+      // A native WALL is used only as a vision-shadow projection. Its native
+      // blocking flag couples token and light collision, so it must stay false;
+      // movement is handled by MovementBlocker from the independent source data.
+      if (metadata?.blocking.blocksVision) {
+        const existing = candidates.shift();
+        if (!existing) {
+          additions.push(createLocalWall(source));
+        } else {
+          nextExpectedIds.add(existing.id);
+          if (!sourceMatchesProjection(source, existing)) {
+            updates.push({ current: existing, source });
+          }
         }
       }
-      for (const duplicate of candidates) deletions.push(duplicate.id);
+      for (const unused of candidates) deletions.push(unused.id);
 
       const guideCandidates = guidesBySource.get(source.id) ?? [];
       const existingGuide = guideCandidates.shift();

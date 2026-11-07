@@ -21,25 +21,25 @@ OBR.onReady(async () => {
     const toolMetadata = await OBR.tool.getMetadata(TOOL_ID);
     const wallId = typeof toolMetadata.selectedWallId === "string" ? toolMetadata.selectedWallId : "";
     if (!wallId) {
-      message("请先在地图上选择一段墙体。");
+      message("请先在地图上选择一条墙体。");
       if (save) save.disabled = true;
       return;
     }
     const sources = await OBR.scene.items.getItems(isWallSource);
-    const selected = sources.find((item) => readWallSourceMetadata(item)?.wallId === wallId);
-    const metadata = selected ? readWallSourceMetadata(selected) : null;
-    if (!metadata) {
+    const group = sources.filter((item) => readWallSourceMetadata(item)?.wallId === wallId);
+    const metadata = group[0] ? readWallSourceMetadata(group[0]) : null;
+    if (!metadata || group.length === 0) {
       message("选中的墙体已不存在，请重新选择。");
       if (save) save.disabled = true;
       return;
     }
-    const group = sources.filter((item) => readWallSourceMetadata(item)?.wallId === wallId);
     if (movement) movement.checked = metadata.blocking.blocksMovement;
     if (vision) vision.checked = metadata.blocking.blocksVision;
     if (light) light.checked = metadata.blocking.blocksLight;
-    message("已选中 " + group.length + " 段墙体。属性将应用到整条墙体。");
+    message("已选中 " + group.length + " 段墙体。修改后统一应用到整条墙体。");
 
     save?.addEventListener("click", async () => {
+      save.disabled = true;
       try {
         const blocking = {
           blocksMovement: movement?.checked ?? true,
@@ -57,13 +57,15 @@ OBR.onReady(async () => {
             }
           },
         );
-        await OBR.notification.show("墙体属性已保存。", "SUCCESS");
+        message("属性已保存。");
         await OBR.popover.close(POPOVER_ID);
       } catch (error) {
         message("保存失败：" + (error instanceof Error ? error.message : "未知错误"));
+        save.disabled = false;
       }
     });
   } catch (error) {
     message("无法读取墙体属性：" + (error instanceof Error ? error.message : "未知错误"));
+    if (save) save.disabled = true;
   }
 });

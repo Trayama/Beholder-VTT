@@ -5,31 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>墙体属性</title>
   <style>
-    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#1c222c; color:#edf1f7; }
+    :root { color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:#1a2029; color:#e9edf4; }
     * { box-sizing:border-box; }
     body { margin:0; padding:16px; }
-    h1 { font-size:15px; margin:0 0 5px; }
-    p { font-size:11px; color:#9ca8b8; margin:0 0 14px; line-height:1.5; }
-    label { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid #343d4a; font-size:13px; }
-    input { width:17px; height:17px; accent-color:#9a7be8; }
-    #status { min-height:18px; color:#d9b76d; font-size:11px; margin:9px 0; }
+    header { display:flex; align-items:center; gap:9px; margin-bottom:6px; }
+    .mark { width:27px; height:27px; border-radius:8px; display:grid; place-items:center; background:#6651a5; color:#fff; font-weight:800; }
+    h1 { font-size:14px; margin:0; }
+    .sub { color:#98a4b5; font-size:10px; margin:3px 0 14px; line-height:1.45; }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 2px; border-top:1px solid #343e4c; }
+    .copy { min-width:0; }
+    .copy strong { display:block; font-size:12px; }
+    .copy small { display:block; color:#98a4b5; font-size:9px; margin-top:4px; line-height:1.4; }
+    input { width:17px; height:17px; accent-color:#9a7be8; flex:0 0 auto; }
+    #status { min-height:17px; color:#d5b574; font-size:10px; margin:10px 0 2px; }
     footer { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
-    button { border:1px solid #485365; background:#2b3441; color:#edf1f7; border-radius:7px; padding:7px 13px; cursor:pointer; }
-    button.primary { background:#8d70d8; border-color:#8d70d8; color:#fff; }
-    button:disabled { opacity:.45; cursor:default; }
+    button { border:1px solid #465262; background:#29323e; color:#e9edf4; border-radius:7px; padding:7px 13px; cursor:pointer; font-size:11px; }
+    button.primary { background:#8e73d5; border-color:#8e73d5; color:#fff; font-weight:700; }
+    button:disabled { opacity:.4; cursor:default; }
   </style>
   <script type="importmap">
     { "imports": { "@owlbear-rodeo/sdk": "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@3.1.0/+esm" } }
   </script>
 </head>
 <body>
-  <h1>墙体属性</h1>
-  <p>设置会应用到整条连续墙体。当前只有视野阻挡映射到 Owlbear 原生 WALL；移动与光照阻挡先保存为独立墙体属性，供对应模块接入。</p>
-  <label>阻挡棋子移动 <input id="blocks-movement" type="checkbox" /></label>
-  <label>阻挡视野 <input id="blocks-vision" type="checkbox" /></label>
-  <label>阻挡光线 <input id="blocks-light" type="checkbox" /></label>
-  <div id="status">正在读取…</div>
-  <footer><button id="cancel">取消</button><button id="save" class="primary">保存</button></footer>
+  <header><div class="mark">W</div><h1>墙体属性</h1></header>
+  <p class="sub">设置应用于整条连续墙体。三项阻挡分别保存，不互相覆盖。</p>
+  <div class="row">
+    <div class="copy"><strong>阻挡棋子移动</strong><small>启用后，棋子不能穿过这段墙体。</small></div>
+    <input id="blocks-movement" type="checkbox" />
+  </div>
+  <div class="row">
+    <div class="copy"><strong>阻挡视野</strong><small>通过本地墙体投影生成视野阴影。</small></div>
+    <input id="blocks-vision" type="checkbox" />
+  </div>
+  <div class="row">
+    <div class="copy"><strong>阻挡光线</strong><small>属性已独立保存；动态光源碰撞适配器仍在开发。</small></div>
+    <input id="blocks-light" type="checkbox" />
+  </div>
+  <div id="status">正在读取墙体…</div>
+  <footer><button id="cancel">取消</button><button id="save" class="primary">保存属性</button></footer>
   <script type="module" src="./wall-properties.js"></script>
 </body>
 </html>

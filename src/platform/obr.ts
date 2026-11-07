@@ -28,6 +28,8 @@ export interface SceneItem {
   rotation: number;
   scale: Vector2;
   metadata: Record<string, unknown>;
+  lastModifiedUserId?: string;
+  createdUserId?: string;
   attachedTo?: string;
   disableHit?: boolean;
   disableAutoZIndex?: boolean;
@@ -149,6 +151,8 @@ export interface OBRApi {
   onReady(callback: () => void): void;
   player: {
     getRole(): Promise<PlayerRole>;
+    getId(): Promise<string>;
+    getSelection(): Promise<string[] | undefined>;
     onChange(callback: (player: unknown) => void): () => void;
   };
   notification: {
@@ -175,6 +179,7 @@ export interface OBRApi {
       addItems(items: SceneItem[]): Promise<void>;
       updateItems(filterOrItems: SceneItem[] | ((item: SceneItem) => boolean), update: (drafts: SceneItem[]) => void): Promise<void>;
       deleteItems(ids: string[]): Promise<void>;
+      getItemBounds(ids: string[]): Promise<{ min: Vector2; max: Vector2; width: number; height: number; center: Vector2 }>;
       onChange(callback: (items: SceneItem[]) => void): () => void;
     };
     history: {

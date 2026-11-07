@@ -71,3 +71,64 @@ export function segmentToSegmentDistance(a: Vector2, b: Vector2, c: Vector2, d: 
     pointToSegmentDistance(d, a, b),
   );
 }
+
+
+export interface WallSegment2D {
+  start: Vector2;
+  end: Vector2;
+}
+
+/**
+ * Returns the last safe point along a token movement segment before its
+ * circular footprint touches a blocking wall. A null result means the move
+ * is clear. The calculation uses the token's bounding-circle radius.
+ */
+export function constrainMovement(
+  start: Vector2,
+  end: Vector2,
+  walls: WallSegment2D[],
+  radius: number,
+): Vector2 | null {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= EPSILON || walls.length === 0) return null;
+
+  const safeRadius = Math.max(0, radius);
+  let earliest = 1;
+
+  for (const wall of walls) {
+    const startDistance = pointToSegmentDistance(start, wall.start, wall.end);
+    const endDistance = pointToSegmentDistance(end, wall.start, wall.end);
+    const crossesWall = segmentsIntersect(start, end, wall.start, wall.end);
+
+    // A token already touching a wall may move away or slide along it. It
+    // cannot move deeper into the wall or cross through it from that state.
+    if (startDistance <= safeRadius + EPSILON) {
+      if (crossesWall || endDistance < startDistance - EPSILON) return { ...start };
+      continue;
+    }
+
+    if (segmentToSegmentDistance(start, end, wall.start, wall.end) > safeRadius + EPSILON) {
+      continue;
+    }
+
+    // Distance from the swept path [start, point(t)] to the wall is monotonic,
+    // so binary search finds the first point at which the token touches it.
+    let low = 0;
+    let high = 1;
+    for (let iteration = 0; iteration < 28; iteration += 1) {
+      const middle = (low + high) / 2;
+      const point = { x: start.x + dx * middle, y: start.y + dy * middle };
+      const distance = segmentToSegmentDistance(start, point, wall.start, wall.end);
+      if (distance > safeRadius) low = middle;
+      else high = middle;
+    }
+
+    const safetyMargin = Math.min(0.02, 1 / length);
+    earliest = Math.min(earliest, Math.max(0, low - safetyMargin));
+  }
+
+  if (earliest >= 1 - EPSILON) return null;
+  return { x: start.x + dx * earliest, y: start.y + dy * earliest };
+}

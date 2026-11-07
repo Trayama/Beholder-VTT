@@ -1,6 +1,6 @@
 {
   "name": "Beholder VTT",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "manifest_version": 1,
   "author": "Trayama",
   "description": "A modular TRPG toolkit for Owlbear Rodeo. Includes wall editing and per-client wall projection.",
@@ -11,7 +11,7 @@
     "title": "Beholder VTT",
     "icon": "https://trayama.github.io/Beholder-VTT/icon.svg",
     "popover": "https://trayama.github.io/Beholder-VTT/control.html",
-    "width": 360,
-    "height": 520
+    "width": 390,
+    "height": 560
   }
 }

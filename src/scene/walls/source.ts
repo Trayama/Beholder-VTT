@@ -61,7 +61,7 @@ export function createLocalWall(source: LineItem): WallItem {
     .scale(source.scale ?? UNIT)
     .visible(true)
     .layer("FOG")
-    .blocking(metadata.blocking.blocksVision)
+    .blocking(false)
     .doubleSided(true)
     .disableAutoZIndex(true)
     .disableAttachmentBehavior(["VISIBLE", "COPY"])
@@ -86,7 +86,7 @@ export function applySourceToLocalDraft(draft: SceneItem, source: LineItem): voi
   draft.scale = source.scale ?? UNIT;
   draft.visible = true;
   draft.layer = "FOG";
-  draft.blocking = metadata.blocking.blocksVision;
+  draft.blocking = false;
   draft.doubleSided = true;
   draft.disableAttachmentBehavior = ["VISIBLE", "COPY"];
   draft.metadata = {
@@ -121,7 +121,7 @@ export function sourceMatchesProjection(source: LineItem, projection: WallItem):
     sameVector(projectionPosition, sourcePosition) &&
     sameVector(projectionScale, sourceScale) &&
     close(projection.rotation ?? 0, source.rotation ?? 0) &&
-    projection.blocking === metadata.blocking.blocksVision &&
+    projection.blocking === false &&
     projection.doubleSided === true &&
     projection.visible === true;
 }

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  constrainMovement,
   pointToSegmentDistance,
   segmentToSegmentDistance,
   segmentsIntersect,
@@ -43,4 +44,47 @@ test("segmentToSegmentDistance is zero on intersection", () => {
     { x: 0, y: 0 }, { x: 10, y: 0 },
     { x: 5, y: -5 }, { x: 5, y: 5 },
   ), 0);
+});
+
+test("movement stops before a wall using the token footprint radius", () => {
+  const safe = constrainMovement(
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    [{ start: { x: 50, y: -40 }, end: { x: 50, y: 40 } }],
+    10,
+  );
+  assert.ok(safe);
+  assert.ok(safe.x < 40);
+  assert.ok(safe.x > 38);
+  assert.equal(safe.y, 0);
+});
+
+test("movement remains free when it passes outside a wall endpoint", () => {
+  const safe = constrainMovement(
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    [{ start: { x: 50, y: 30 }, end: { x: 50, y: 80 } }],
+    10,
+  );
+  assert.equal(safe, null);
+});
+
+test("a token already touching a wall may move away from it", () => {
+  const safe = constrainMovement(
+    { x: 40, y: 0 },
+    { x: 20, y: 0 },
+    [{ start: { x: 50, y: -40 }, end: { x: 50, y: 40 } }],
+    10,
+  );
+  assert.equal(safe, null);
+});
+
+test("a token already touching a wall cannot cross through it", () => {
+  const safe = constrainMovement(
+    { x: 40, y: 0 },
+    { x: 80, y: 0 },
+    [{ start: { x: 50, y: -40 }, end: { x: 50, y: 40 } }],
+    10,
+  );
+  assert.deepEqual(safe, { x: 40, y: 0 });
 });
