@@ -1,11 +1,10 @@
 import { OBR } from "../../platform/obr.js";
 import type { ItemInteractionUpdate, SceneItem, ToolEvent, Vector2 } from "../../platform/obr.js";
 import { logger } from "../../core/logger.js";
-import { PREFERENCES, readStringPreference } from "../../core/preferences.js";
+import { PREFERENCES, readStringPreference, writeStringPreference } from "../../core/preferences.js";
 import { constrainGroupDelta, type MovementFootprint, type WallSegment2D } from "./geometry.js";
 import { getMovementWallSegments } from "./collision.js";
 import { isLikelyNativeSelectTool } from "./native-select-utils.js";
-import { writeStringPreference } from "../../core/preferences.js";
 import {
   createWallAwareMoveMarker,
   isMovableToken,
