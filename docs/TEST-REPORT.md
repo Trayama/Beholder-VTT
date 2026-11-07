@@ -4,7 +4,17 @@ Date: 2026-11-07
 
 ## Automated validation
 
-GitHub Actions validation is pending for this commit. Update this section with the exact workflow run, commit SHA, test count, and Pages deployment result after CI completes.
+GitHub Actions run: [42384023507](https://github.com/Trayama/Beholder-VTT/actions/runs/42384023507)  
+Commit: `edc38dbdacf7aec48cac34c1645754f9102318df`
+
+| Check | Result |
+|---|---|
+| TypeScript type check | PASS |
+| Production build | PASS |
+| Unit tests | PASS — 18 passed, 0 failed |
+| GitHub Pages build | PASS |
+| GitHub Pages deployment | PASS |
+| Published manifest version | 0.0.7 |
 
 ## 0.0.7 changes
 
@@ -13,7 +23,8 @@ GitHub Actions validation is pending for this commit. Update this section with t
 - Applies shared LINE wall geometry with `blocksMovement=true`; does not inspect Light attachment or token creator.
 - Retained the GM-side post-commit correction as a fallback for native Owlbear tools.
 - GM fallback now refreshes a complete scene snapshot after item-change events rather than trusting the event payload to be a full-scene snapshot.
-- Added pure tests for no-Light CHARACTER tokens, GM/player-created tokens, MOUNT tokens, and movement-wall geometry.
+- Added a one-shot movement marker so the GM fallback accepts paths already checked by the Beholder tool, including valid paths around wall endpoints.
+- Added pure tests for no-Light CHARACTER tokens, GM/player-created tokens, MOUNT tokens, movement-wall geometry, and validated movement markers.
 - Native local WALL projections remain `blocking=false`; vision, movement, and light properties remain separate.
 
 ## Real Owlbear room verification — pending
