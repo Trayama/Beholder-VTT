@@ -506,7 +506,7 @@ export class WallDrawTool {
       sources: group,
       mode: node ? "node" : "move",
       node,
-      anchor: event.pointerPosition,
+      anchor: await this.snap(event.pointerPosition),
       previewIds: [],
     };
     const previews = group.map((source) => {
@@ -545,7 +545,8 @@ export class WallDrawTool {
   private async moveEdit(event: ToolEvent): Promise<void> {
     const session = this.editSession;
     if (!session) return;
-    const geometry = this.editedGeometry(session, event.pointerPosition);
+    const pointer = await this.snap(event.pointerPosition);
+    const geometry = this.editedGeometry(session, pointer);
     const segments = session.sources.map((source) => geometry.get(source.id) ?? {
       start: source.startPosition,
       end: source.endPosition,
@@ -557,10 +558,14 @@ export class WallDrawTool {
     const session = this.editSession;
     this.editSession = null;
     if (!session) return;
-    const geometry = this.editedGeometry(session, event.pointerPosition);
+    const pointer = await this.snap(event.pointerPosition);
+    const geometry = this.editedGeometry(session, pointer);
     await this.removePreviews(session.previewIds);
-    const delta = Math.hypot(event.pointerPosition.x - session.anchor.x, event.pointerPosition.y - session.anchor.y);
-    if (delta < 1) return;
+    const delta = Math.hypot(pointer.x - session.anchor.x, pointer.y - session.anchor.y);
+    if (delta < 1) {
+      await this.setSelection(session.wallId);
+      return;
+    }
     try {
       const byId = new Map(session.sources.map((source) => [source.id, geometry.get(source.id)]));
       const ids = new Set(byId.keys());
@@ -589,7 +594,10 @@ export class WallDrawTool {
   private async cancelEdit(): Promise<void> {
     const session = this.editSession;
     this.editSession = null;
-    if (session) await this.removePreviews(session.previewIds);
+    if (session) {
+      await this.removePreviews(session.previewIds);
+      await this.setSelection(session.wallId);
+    }
   }
 
   private async eraseAt(point: Vector2): Promise<void> {
