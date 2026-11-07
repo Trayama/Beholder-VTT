@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.3 — Restore GitHub Pages hosting
+
+- Serve the extension Manifest, background HTML, JavaScript, and icon from one GitHub Pages origin.
+- Keep jsDelivr only for third-party SDK dependencies, not the extension entry page.
+- Switch the deployment workflow from publishing a jsDelivr branch to the official GitHub Pages artifact deployment flow.
+- This release changes packaging and hosting only; wall behavior and toolbar registration logic are unchanged.
+
+
 ## 0.0.2 — Toolbar registration fix
 
 - Make wall tool registration idempotent across background iframe reloads.
