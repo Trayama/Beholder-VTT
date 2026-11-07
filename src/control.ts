@@ -22,6 +22,15 @@ const tokenCount = document.querySelector<HTMLElement>("#token-count");
 const playerHint = document.querySelector<HTMLElement>("#player-hint");
 
 let clearArmedUntil = 0;
+let historyRefreshTimer: number | null = null;
+
+function scheduleHistoryRefresh(): void {
+  if (historyRefreshTimer !== null) window.clearTimeout(historyRefreshTimer);
+  historyRefreshTimer = window.setTimeout(() => {
+    historyRefreshTimer = null;
+    void updateHistoryButtons();
+  }, 140);
+}
 
 function setActionStatus(message: string): void {
   if (actionStatus) actionStatus.textContent = message;
@@ -199,7 +208,10 @@ OBR.onReady(async () => {
         await updateHistoryButtons();
       }
     });
-    OBR.scene.items.onChange((items) => updateSceneStats(items));
+    OBR.scene.items.onChange((items) => {
+      updateSceneStats(items);
+      scheduleHistoryRefresh();
+    });
   } catch (error) {
     if (sceneLabel) sceneLabel.textContent = "无法读取场景状态";
     if (sceneDot) sceneDot.style.background = "#c87878";

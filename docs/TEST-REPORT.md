@@ -1,36 +1,41 @@
-# Test report — Beholder VTT 0.0.4
+# Test report — Beholder VTT 0.0.6
 
 Date: 2026-11-07
 
-## Automated checks
+## Automated validation
 
-GitHub Actions run: [42370150770](https://github.com/Trayama/Beholder-VTT/actions/runs/42370150770)
+GitHub Actions run: [42375285389](https://github.com/Trayama/Beholder-VTT/actions/runs/42375285389)  
+Commit: `b96b5361473dd032943217794a50c2de68550671`
 
-| Check | Result | Notes |
-|---|---|---|
-| TypeScript typecheck | PASS | `npm run typecheck` |
-| Build | PASS | `node scripts/build.mjs` |
-| Existing unit tests | PASS | 8 passed, 0 failed |
-| Production manifest build | PASS | Action popover and background URLs point to GitHub Pages |
-| GitHub Pages deployment | PASS | `develop` build published to `gh-pages` |
+| Check | Result |
+|---|---|
+| TypeScript type check | PASS |
+| Production build | PASS |
+| Unit tests | PASS — 12 passed, 0 failed |
+| GitHub Pages build | PASS |
+| GitHub Pages deployment | PASS |
+| Published manifest version | 0.0.6 |
 
-## New editor surface
+## 0.0.6 changes covered by automated validation
 
-- Left-top global control page is included in the deployment.
-- Right-side wall tool registers five modes and seven actions.
-- Wall property page and mode icons are included in the deployment.
-- Local preferences are separated from shared scene data.
+- Unified left-top control panel and its toolbar / snap / endpoint / guide / wall-property / undo / redo / clear controls.
+- Free-position drawing and optional grid snapping, including temporary Ctrl / Cmd bypass.
+- Reordered right-side wall modes and always-visible properties action.
+- GM-authoritative post-commit movement correction for CHARACTER and MOUNT image tokens.
+- Independent wall movement / vision / light metadata remains intact; local native WALL blocking stays disabled.
 
-## Not yet verified in a live Owlbear room
+## Real Owlbear room verification — pending
 
-The automated build does not prove the editor works correctly inside a real Owlbear room. These acceptance checks remain pending:
+CI does not prove real Owlbear interaction or synchronization. The following still require a GM and a player in the same room:
 
-- Top-left control popover opens and its toolbar visibility toggle registers/removes the right-side tool.
-- GM can use all five modes and all seven actions.
-- Continuous walls remain connected when a node is dragged.
-- Wall property changes update all segments in a wall group and all clients' local projections.
-- Player clients receive local WALL projections but never GM helper lines.
-- Undo/redo, delete, clear, scene reload, and reconnect behave correctly.
-- Large maps remain responsive during editing and synchronization.
+1. Left-top control panel opens and every visible control works.
+2. Toolbar hide / show registers and removes the right-side tool without affecting shared wall data.
+3. Free drawing places endpoints at the pointer position; grid mode snaps; Ctrl / Cmd temporarily bypasses grid.
+4. Select, line, polyline, rectangle, erase, property editing, undo and redo work.
+5. A player moving a CHARACTER token through a movement-blocking wall is corrected by the connected GM client.
+6. The same collision check works for MOUNT tokens, multiple wall segments, corners, and rapid repeated moves.
+7. Player clients receive local vision WALL projections but never GM helper lines.
+8. Scene reload, reconnect, and extension restart rebuild local projections without duplicates.
+9. No repeated success notifications occur during normal Beholder operations.
 
-A successful CI run is not treated as proof of live runtime functionality. Do not mark the phase accepted until these checks pass in an actual GM/player room.
+Movement correction is post-commit and may briefly snap a token back. It is not a native pre-move lock or pathfinding implementation. Do not mark the movement system accepted until the live-room tests above pass.
