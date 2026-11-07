@@ -4,7 +4,7 @@ import { logger } from "../../core/logger.js";
 import { constrainMovement } from "./geometry.js";
 import type { WallSegment2D } from "./geometry.js";
 import { getMovementWallSegments } from "./collision.js";
-import { isMovableToken } from "./model.js";
+import { hasWallAwareMoveMarker, isMovableToken, WALL_AWARE_MOVE_KEY } from "./model.js";
 
 interface TokenSnapshot {
   position: Vector2;
@@ -42,8 +42,6 @@ export class MovementBlocker {
     }
 
     this.unsubscribers.push(
-      // Always fetch the complete scene. The SDK event payload is not used as
-      // an authoritative full-scene snapshot by this module.
       OBR.scene.items.onChange(() => {
         void this.refreshScene();
       }),
@@ -135,6 +133,16 @@ export class MovementBlocker {
     };
   }
 
+  private async clearTrustedMoveMarker(token: SceneItem): Promise<void> {
+    try {
+      await OBR.scene.items.updateItems([token], (drafts) => {
+        for (const draft of drafts) delete draft.metadata[WALL_AWARE_MOVE_KEY];
+      });
+    } catch (error) {
+      logger.warn("Could not clear the wall-aware movement marker.", { itemId: token.id, error });
+    }
+  }
+
   private async process(items: SceneItem[]): Promise<void> {
     if (!(await OBR.scene.isReady())) return;
 
@@ -147,6 +155,16 @@ export class MovementBlocker {
     }
 
     for (const token of tokens) {
+      // A custom-tool path was already checked at each drag update. Accept its
+      // final position as the new safe snapshot, then remove the one-shot marker.
+      // This prevents a legal path around a wall endpoint being mistaken for a
+      // straight-line wall crossing by the GM fallback.
+      if (hasWallAwareMoveMarker(token)) {
+        this.snapshots.set(token.id, await this.capture(token));
+        await this.clearTrustedMoveMarker(token);
+        continue;
+      }
+
       const previous = this.snapshots.get(token.id);
       if (!previous) {
         this.snapshots.set(token.id, await this.capture(token));
@@ -191,8 +209,6 @@ export class MovementBlocker {
         center: safeCenter,
       };
 
-      // Update the snapshot before writing, so our own correction event does
-      // not get interpreted as a fresh attempted move.
       this.snapshots.set(token.id, correctedSnapshot);
 
       try {

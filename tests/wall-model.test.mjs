@@ -2,11 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createDefaultWallMetadata,
+  hasWallAwareMoveMarker,
   isLocalWall,
   isMovableToken,
   isWallSource,
   LOCAL_WALL_KEY,
   readWallSourceMetadata,
+  WALL_AWARE_MOVE_KEY,
   WALL_SOURCE_KEY,
 } from "../dist/scene/walls/model.js";
 
@@ -104,4 +106,18 @@ test("non-token image layers keep their native Owlbear movement", () => {
   const drawing = { ...baseItem, type: "IMAGE", layer: "DRAWING" };
   assert.equal(isMovableToken(prop), false);
   assert.equal(isMovableToken(drawing), false);
+});
+
+test("one-shot marker identifies a move already checked by the Beholder tool", () => {
+  const token = {
+    ...baseItem,
+    id: "character-token",
+    type: "IMAGE",
+    layer: "CHARACTER",
+    metadata: {
+      [WALL_AWARE_MOVE_KEY]: { schemaVersion: 1, nonce: "test-nonce" },
+    },
+  };
+  assert.equal(hasWallAwareMoveMarker(token), true);
+  assert.equal(hasWallAwareMoveMarker({ ...token, metadata: {} }), false);
 });

@@ -4,7 +4,7 @@ import { logger } from "../../core/logger.js";
 import { constrainMovement } from "./geometry.js";
 import type { WallSegment2D } from "./geometry.js";
 import { getMovementWallSegments } from "./collision.js";
-import { isMovableToken, isWallSource } from "./model.js";
+import { createWallAwareMoveMarker, isMovableToken, isWallSource, WALL_AWARE_MOVE_KEY } from "./model.js";
 
 const TOOL_ID = "com.beholder-vtt/token-movement";
 const MOVE_MODE_ID = TOOL_ID + "/move";
@@ -30,7 +30,8 @@ interface MovementSession {
  * This is an explicit Owlbear tool rather than an override of Owlbear's native
  * Select tool. It uses the Interaction API for high-frequency local movement,
  * constraining every proposed position against the shared LINE wall geometry.
- * The GM-side MovementBlocker remains as a fallback for native-tool movement.
+ * A short-lived metadata marker tells the GM fallback that this path has
+ * already been collision-checked, including paths that go around wall ends.
  */
 export class TokenMovementTool {
   private registered = false;
@@ -226,7 +227,10 @@ export class TokenMovementTool {
     try {
       session.stop();
       await OBR.scene.items.updateItems([session.item], (drafts) => {
-        for (const draft of drafts) draft.position = { ...session.currentPosition };
+        for (const draft of drafts) {
+          draft.position = { ...session.currentPosition };
+          draft.metadata[WALL_AWARE_MOVE_KEY] = createWallAwareMoveMarker();
+        }
       });
       logger.debug("Wall-aware token movement committed.", {
         itemId: session.item.id,

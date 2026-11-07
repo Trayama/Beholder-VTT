@@ -3,6 +3,7 @@ import type { SceneItem } from "../../platform/obr.js";
 export const WALL_SOURCE_KEY = "com.beholder-vtt/wall-source";
 export const LOCAL_WALL_KEY = "com.beholder-vtt/local-wall";
 export const LOCAL_GUIDE_KEY = "com.beholder-vtt/local-guide";
+export const WALL_AWARE_MOVE_KEY = "com.beholder-vtt/wall-aware-move";
 export const WALL_SCHEMA_VERSION = 1 as const;
 
 export interface WallBlocking {
@@ -50,6 +51,15 @@ function isBlocking(value: unknown): value is WallBlocking {
  */
 export function isMovableToken(item: SceneItem): boolean {
   return item.type === "IMAGE" && (item.layer === "CHARACTER" || item.layer === "MOUNT");
+}
+
+export function createWallAwareMoveMarker(): { schemaVersion: 1; nonce: string } {
+  return { schemaVersion: 1, nonce: crypto.randomUUID() };
+}
+
+export function hasWallAwareMoveMarker(item: SceneItem): boolean {
+  const raw = item.metadata?.[WALL_AWARE_MOVE_KEY];
+  return isRecord(raw) && raw.schemaVersion === 1 && typeof raw.nonce === "string";
 }
 
 export function createDefaultWallMetadata(wallId: string): WallSourceMetadata {

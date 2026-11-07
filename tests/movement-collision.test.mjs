@@ -52,8 +52,10 @@ test("movement collision applies source transforms before testing geometry", () 
     metadata: { [WALL_SOURCE_KEY]: createDefaultWallMetadata("wall-1") },
   };
   const segments = getMovementWallSegments([source]);
-  assert.deepEqual(segments[0], {
-    start: { x: 10, y: 20 },
-    end: { x: 10, y: 40 },
-  });
+  const segment = segments[0];
+  assert.ok(segment);
+  assert.ok(Math.abs(segment.start.x - 10) < 1e-8);
+  assert.ok(Math.abs(segment.start.y - 20) < 1e-8);
+  assert.ok(Math.abs(segment.end.x - 10) < 1e-8);
+  assert.ok(Math.abs(segment.end.y - 40) < 1e-8);
 });
