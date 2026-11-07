@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>移动工具设置</title>
+  <style>
+    :root { color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:#171b23; color:#e9edf4; --panel:#202631; --line:#343e4c; --muted:#98a4b5; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:15px; }
+    header { display:flex; align-items:center; gap:9px; margin-bottom:5px; }
+    .mark { width:30px; height:30px; border-radius:9px; display:grid; place-items:center; background:#7158b5; color:#fff; font-weight:850; }
+    h1 { font-size:13px; margin:0; }
+    .sub { color:var(--muted); font-size:10px; line-height:1.5; margin:4px 0 13px; }
+    .section { border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:11px; margin-bottom:9px; }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .copy { min-width:0; }
+    .copy strong { display:block; font-size:11px; }
+    .copy small { display:block; color:var(--muted); font-size:9px; margin-top:4px; line-height:1.5; }
+    input[type=checkbox] { appearance:none; width:34px; height:19px; flex:0 0 auto; border-radius:12px; background:#4a5564; position:relative; cursor:pointer; }
+    input[type=checkbox]::after { content:""; position:absolute; left:3px; top:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.15s; }
+    input[type=checkbox]:checked { background:#8c72d3; }
+    input[type=checkbox]:checked::after { transform:translateX(15px); }
+    .note { color:#aeb9c8; font-size:9px; line-height:1.6; padding:8px 1px 0; }
+    footer { display:flex; justify-content:flex-end; margin-top:10px; }
+    button { border:1px solid var(--line); background:#252d39; color:#e9edf4; border-radius:7px; padding:7px 12px; font-size:10px; cursor:pointer; }
+  </style>
+  <script type="importmap">
+    { "imports": { "@owlbear-rodeo/sdk": "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@3.1.0/+esm" } }
+  </script>
+</head>
+<body>
+  <header><div class="mark">M</div><h1>选择与移动设置</h1></header>
+  <p class="sub">角色 Token 的移动由 Beholder 实时检测墙体。其他场景对象继续使用 Owlbear 默认拖动行为。</p>
+  <section class="section">
+    <div class="row">
+      <div class="copy">
+        <strong>多选 Token 整组移动</strong>
+        <small>选中多个对象后拖动其中一个，整组一起移动。任意角色 Token 遇到移动阻挡墙，整组都会停在最后安全位置。</small>
+      </div>
+      <input id="group-movement" type="checkbox" />
+    </div>
+    <div class="note">碰撞对象：CHARACTER 与 MOUNT 图层。无需光源。墙体只读取「阻挡棋子移动」属性，不依赖视野或光照投影。</div>
+  </section>
+  <section class="section">
+    <div class="copy">
+      <strong>交互兼容说明</strong>
+      <small>空白区域拖动用于框选；道具、地图和绘图的拖动交还给 Owlbear 默认交互。Token 的旋转与缩放仍可暂时关闭 Beholder 总设置中的「接管原生 Move」，使用 Owlbear 原生变换工具。</small>
+    </div>
+  </section>
+  <footer><button id="close">关闭</button></footer>
+  <script type="module" src="./movement-settings.js"></script>
+</body>
+</html>

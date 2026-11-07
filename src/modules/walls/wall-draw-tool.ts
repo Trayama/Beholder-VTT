@@ -16,11 +16,13 @@ const RECTANGLE_MODE_ID = TOOL_ID + "/rectangle";
 const SELECT_MODE_ID = TOOL_ID + "/select";
 const ERASE_MODE_ID = TOOL_ID + "/erase";
 const PROPERTIES_ACTION_ID = TOOL_ID + "/properties";
+const SETTINGS_ACTION_ID = TOOL_ID + "/settings";
 const PROPERTIES_POPOVER_ID = "com.beholder-vtt/wall-properties";
+const SETTINGS_POPOVER_ID = "com.beholder-vtt/wall-tools-settings";
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
 const MODE_IDS = [SELECT_MODE_ID, DRAW_MODE_ID, POLYLINE_MODE_ID, RECTANGLE_MODE_ID, ERASE_MODE_ID];
-const ACTION_IDS = [PROPERTIES_ACTION_ID];
+const ACTION_IDS = [PROPERTIES_ACTION_ID, SETTINGS_ACTION_ID];
 
 interface WallHit {
   source: LineItem;
@@ -200,6 +202,16 @@ export class WallDrawTool {
 
   private async registerActions(): Promise<void> {
     const filter = { activeTools: [TOOL_ID], roles: ["GM" as const] };
+    await OBR.tool.createAction({
+      id: SETTINGS_ACTION_ID,
+      icons: [{
+        icon: this.asset("icons/settings.svg"),
+        label: "墙体工具设置与管理",
+        filter,
+      }],
+      onClick: async (_context, elementId) => this.openSettings(elementId),
+    });
+
     await OBR.tool.createAction({
       id: PROPERTIES_ACTION_ID,
       icons: [{
@@ -603,6 +615,16 @@ export class WallDrawTool {
     await OBR.scene.items.deleteItems(group.map((source) => source.id));
     if (this.selectedWallId === metadata.wallId) await this.setSelection(null);
     await this.reconciler.schedule("wall-erased");
+  }
+
+  private async openSettings(elementId: string): Promise<void> {
+    await OBR.popover.open({
+      id: SETTINGS_POPOVER_ID,
+      url: this.asset("wall-tools-settings.html"),
+      width: 350,
+      height: 500,
+      anchorElementId: elementId,
+    });
   }
 
   private async openProperties(elementId: string): Promise<void> {

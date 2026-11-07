@@ -1,48 +1,39 @@
-# Test report — Beholder VTT 0.0.8
+# Test report — Beholder VTT 0.0.9
 
-Date: 2026-11-07
+Date: 2026-11-08
 
 ## Automated validation
 
-GitHub Actions run: [42387814816](https://github.com/Trayama/Beholder-VTT/actions/runs/42387814816)  
-Commit: `05f7256de83c8e03b2a82854d5cddbdc046f3349`
+CI validation is pending for this commit. Record the exact workflow run, test count, and Pages deployment result after the workflow completes.
 
-| Check | Result |
-|---|---|
-| TypeScript type check | PASS |
-| Production build | PASS |
-| Unit tests | PASS — 21 passed, 0 failed |
-| GitHub Pages build | PASS |
-| GitHub Pages deployment | PASS |
-| Published manifest version | 0.0.8 |
+## 0.0.9 changes
 
-## 0.0.8 changes
-
-- Added a local binding control for the Owlbear native Select tool.
-- Added a native Select tool-mode bridge using SDK `createMode`, `activateMode`, `onToolChange`, `onToolDown`, and `onToolUp`.
-- Normal CHARACTER / MOUNT drags use shared LINE wall geometry and the Interaction API.
-- Selected groups move as one unit; the earliest token collision constrains the group delta.
-- Non-token drags, blank-space marquee selection, and transformer gestures temporarily delegate to Owlbear's default drag mode.
-- Kept the independent wall-aware movement tool as a fallback until real-room verification.
-- Added unit tests for group movement constraints and native Select tool ID detection.
-- Wall geometry, local WALL projections, and movement / vision / light properties remain independent.
+- Replaced the failed native Select binding experiment with a dedicated Beholder Select + Move tool.
+- Clicking Owlbear's built-in Move tool is redirected to Beholder when global takeover is enabled.
+- CHARACTER / MOUNT drags use real-time collision against shared LINE wall geometry.
+- Multi-selection moves as a group; any selected Token collision constrains the group delta.
+- Non-token drags use Owlbear's default drag behavior through the documented `preventDrag` filter.
+- Empty-space drags perform bounding-box marquee selection.
+- Added a movement settings Popover for group movement.
+- Moved wall drawing preferences, history controls, wall clearing and wall properties into a dedicated wall settings Popover.
+- Simplified the top-left panel to global settings, module status and scene status.
+- Retained the GM-authoritative MovementBlocker as a safety net.
+- Removed the unsuccessful native Select mode-binding experiment.
 
 ## Real Owlbear room verification — pending
 
-The SDK exposes custom modes, mode activation, active-tool change events and a pass-through drag filter, but automated tests cannot prove that a custom mode can safely augment the built-in Select tool in a live room.
-
 Test with one GM and one player:
 
-1. Open Beholder control panel while Owlbear's native Select tool is active. Confirm the active tool ID and bind it on each client if it was not auto-detected.
-2. Switch away from Select and back. Confirm the Beholder collision mode automatically reactivates.
-3. Click a CHARACTER Token; confirm native selection and deselection still work.
-4. Drag a CHARACTER Token with no Light through a movement-blocking wall. It should stop during drag.
-5. Repeat with GM-created, player-created and MOUNT Tokens.
-6. Select two or more Tokens and drag one. The group should move together and stop when any Token reaches a blocking wall.
-7. Drag a PROP, MAP or DRAWING object. It should retain native Owlbear movement.
-8. Drag empty space. Native marquee selection should work.
-9. Use rotation and scale handles on a selected Token. Native transformer behavior should work.
-10. Test Shift / Ctrl / Cmd selection, locked items, rapid dragging, cancel / Escape, switching tools mid-drag, scene reload, reconnect and extension restart.
-11. Confirm the separate Beholder wall-aware movement tool remains available as fallback.
+1. Confirm Beholder's Select + Move tool appears and becomes active.
+2. With global takeover enabled, click Owlbear's native Move tool. Confirm the active tool returns to Beholder.
+3. Drag a CHARACTER Token without Light through a movement-blocking wall. It should stop during drag.
+4. Repeat with GM-created, player-created and MOUNT Tokens.
+5. Select multiple Tokens and drag one. The group should move together and stop when any Token reaches a blocking wall.
+6. Disable group movement and confirm only the dragged Token moves.
+7. Drag a PROP, MAP and DRAWING object. Confirm Owlbear's default drag behavior remains available.
+8. Drag empty space and confirm marquee selection; test Shift / Ctrl / Cmd additive selection.
+9. Test locked Tokens, locked props, rapid drag, Escape / cancel, switching tools mid-drag, scene reload, reconnect and extension restart.
+10. Disable native Move takeover and confirm the Owlbear Move tool works again and the GM safety net still corrects wall crossing.
+11. Test Token rotation and scaling with takeover both enabled and disabled. Record any regression before removing the native fallback.
 
-If the native Select bridge disrupts any normal selection or transformer interaction, unbind it from the control panel; the standalone wall-aware movement tool remains available. Do not remove the fallback or mark the bridge complete until live-room tests pass.
+The public SDK does not expose a supported API to hide the built-in Move icon. The takeover redirects tool activation; it does not remove the built-in icon. Do not claim the icon is hidden.

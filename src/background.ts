@@ -9,7 +9,7 @@ registry.register(new WallsModule());
 OBR.onReady(async () => {
   try {
     const role = await OBR.player.getRole();
-    logger.info("Owlbear SDK ready.", { role, version: "0.0.8" });
+    logger.info("Owlbear SDK ready.", { role, version: "0.0.9" });
     await registry.startAll();
   } catch (error) {
     logger.error("Extension startup failed.", error);

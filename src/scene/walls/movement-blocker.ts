@@ -20,11 +20,9 @@ function sameVector(a: Vector2, b: Vector2): boolean {
 }
 
 /**
- * GM-authoritative fallback for movement performed with Owlbear's native tools.
- *
- * The real-time TokenMovementTool is the preferred movement path. This watcher
- * intentionally remains in place so native Select / other tools cannot leave
- * a CHARACTER or MOUNT image token beyond a movement-blocking wall.
+ * GM-authoritative safety net for Token movement paths that bypass Beholder's
+ * real-time Select + Move tool. This remains active when native Move takeover
+ * is temporarily disabled or another extension tool moves a Token.
  */
 export class MovementBlocker {
   private readonly snapshots = new Map<string, TokenSnapshot>();

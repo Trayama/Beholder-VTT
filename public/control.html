@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beholder VTT 控制台</title>
+  <title>Beholder VTT 总设置</title>
   <style>
     :root {
       color-scheme: dark;
@@ -14,8 +14,6 @@
       --panel-soft: #252d39;
       --line: #343e4c;
       --muted: #98a4b5;
-      --accent: #9b80e8;
-      --gold: #d5b574;
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
@@ -36,39 +34,29 @@
     .stat { text-align:center; min-width:30px; }
     .stat b { display:block; font-size:14px; line-height:1.1; }
     .stat small { display:block; color:var(--muted); font-size:9px; margin-top:3px; }
-    main { max-height:390px; overflow:auto; padding:0 2px 2px 0; }
+    main { max-height:430px; overflow:auto; padding:0 2px 2px 0; }
     .card { border:1px solid var(--line); background:var(--panel); border-radius:11px; padding:11px 12px; margin-bottom:9px; }
     .card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
     h2 { margin:0; color:#dce3ec; font-size:11px; font-weight:800; letter-spacing:.04em; }
     .tag { color:#82c7a1; font-size:9px; white-space:nowrap; }
     .tag.planned { color:#a2adbc; }
-    .toolbar-row { display:flex; align-items:center; justify-content:space-between; gap:9px; }
-    .toolbar-row strong { display:block; font-size:11px; }
-    .toolbar-row small { display:block; color:var(--muted); font-size:9px; margin-top:3px; }
-    .primary { border:1px solid #9278dc; background:#9278dc; color:#fff; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:750; white-space:nowrap; }
-    .secondary { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:650; white-space:nowrap; }
-    .segmented { display:flex; gap:4px; padding:3px; background:#151a22; border:1px solid var(--line); border-radius:8px; }
-    .segmented button { flex:1; border:0; border-radius:6px; background:transparent; color:var(--muted); padding:8px 7px; font-size:11px; font-weight:700; }
-    .segmented button.active { color:#fff; background:#6852a6; box-shadow:0 1px 3px #0004; }
     .setting-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 1px; border-top:1px solid #303946; }
+    .setting-row:first-of-type { border-top:0; }
     .setting-copy { min-width:0; }
     .setting-copy strong { display:block; font-size:10px; }
-    .setting-copy small { display:block; color:var(--muted); font-size:9px; margin-top:3px; line-height:1.4; }
+    .setting-copy small { display:block; color:var(--muted); font-size:9px; margin-top:3px; line-height:1.5; }
     input[type=checkbox] { appearance:none; width:34px; height:19px; flex:0 0 auto; border-radius:12px; background:#4a5564; position:relative; cursor:pointer; transition:.15s; }
     input[type=checkbox]::after { content:""; position:absolute; left:3px; top:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.15s; }
     input[type=checkbox]:checked { background:#8c72d3; }
     input[type=checkbox]:checked::after { transform:translateX(15px); }
-    .button-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:8px; }
-    .button-grid button, .danger { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:8px 9px; font-size:10px; font-weight:650; }
-    .button-grid button:first-child { grid-column:1 / -1; }
-    .danger { width:100%; border-color:#65464c; background:#32252b; color:#e6a5a7; font-weight:700; }
-    .danger.armed { border-color:#d38a63; background:#463127; color:#f0c38d; }
-    button:disabled { opacity:.35; cursor:default; }
-    #action-status { min-height:14px; color:#d5b574; font-size:9px; line-height:1.4; margin:8px 1px 0; }
-    .module-row { display:flex; justify-content:space-between; align-items:center; padding:6px 1px; font-size:10px; }
+    .primary { border:1px solid #9278dc; background:#9278dc; color:#fff; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:750; white-space:nowrap; }
+    .secondary { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:650; white-space:nowrap; }
+    .module-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 1px; font-size:10px; }
     .module-row + .module-row { border-top:1px solid #303946; }
-    .hint { color:#8e9aac; font-size:9px; line-height:1.5; margin:8px 1px 0; overflow-wrap:anywhere; }
-    .legacy-note { border:1px solid #5b4b32; background:#2d281f; color:#d8c49c; border-radius:8px; padding:8px 9px; font-size:9px; line-height:1.5; margin:8px 0; }
+    .module-name { font-weight:650; }
+    .hint { color:#8e9aac; font-size:9px; line-height:1.55; margin:8px 1px 0; overflow-wrap:anywhere; }
+    #active-tool-id { color:#d5b574; overflow-wrap:anywhere; }
+    #action-status { min-height:14px; color:#d5b574; font-size:9px; line-height:1.4; margin:8px 1px 0; }
     footer { border-top:1px solid #303946; margin-top:8px; padding:9px 1px 0; color:#7f8b9b; font-size:9px; line-height:1.5; }
   </style>
   <script type="importmap">
@@ -78,9 +66,10 @@
 <body>
   <header>
     <div class="mark">B</div>
-    <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">TRPG TABLETOP TOOLKIT</div></div>
-    <div class="version">0.0.8</div>
+    <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">GLOBAL SETTINGS</div></div>
+    <div class="version">0.0.9</div>
   </header>
+
   <div class="statusbar">
     <div class="dot" id="scene-dot"></div>
     <div class="statuscopy"><strong id="scene-label">正在连接场景…</strong><small id="role-label">正在读取身份…</small></div>
@@ -89,63 +78,48 @@
       <div class="stat"><b id="token-count">—</b><small>棋子</small></div>
     </div>
   </div>
+
   <main>
     <section class="card">
-      <div class="card-head"><h2>原生选择工具集成</h2><span class="tag">实验功能</span></div>
-      <div class="toolbar-row">
-        <div><strong>当前 Owlbear 工具</strong><small id="active-tool-id">读取中…</small></div>
-      </div>
+      <div class="card-head"><h2>全局交互</h2><span class="tag">客户端设置</span></div>
       <div class="setting-row">
-        <div class="setting-copy"><strong>已绑定选择工具</strong><small id="bound-tool-id">尚未绑定</small></div>
+        <div class="setting-copy">
+          <strong>Beholder 接管原生 Move</strong>
+          <small>开启后，点击 Owlbear 原生 Move 会自动切换到 Beholder 选择与移动。关闭后恢复原生拖动；GM 的墙体阻挡纠正仍保留。</small>
+        </div>
+        <input id="movement-takeover" type="checkbox" />
       </div>
-      <div class="button-grid">
-        <button id="bind-select-tool" class="primary">绑定当前工具为选择工具</button>
-        <button id="unbind-select-tool" class="secondary">解除绑定</button>
+      <div class="setting-row" data-gm-only>
+        <div class="setting-copy">
+          <strong>墙体编辑工具栏</strong>
+          <small>控制右侧墙体绘制、选择、折线、矩形和橡皮擦工具的显示。</small>
+        </div>
+        <button id="toolbar-toggle" class="primary">读取中…</button>
       </div>
-      <p class="hint" id="select-bind-status">先在 Owlbear 右侧选择原生 Select 工具，再点击绑定。绑定只保存在本客户端；GM 和玩家需要分别绑定一次。若当前工具 ID 以 rodeo.owlbear.tools/select 结尾，插件会自动识别。</p>
+      <p class="hint">Owlbear SDK 不开放删除系统内置工具图标的接口。接管开启时会拦截其工具切换，让 Beholder 成为实际使用的移动入口。</p>
+      <div id="action-status" role="status"></div>
     </section>
+
     <section class="card">
-      <div class="card-head"><h2>地图工具</h2><span class="tag">GM 控制</span></div>
-      <div class="toolbar-row" data-gm-only>
-        <div><strong>右侧墙体编辑工具</strong><small>选择、直线、折线、矩形、橡皮擦</small></div>
-        <button id="toolbar-toggle" class="primary">隐藏工具</button>
-      </div>
-      <p class="hint" id="player-hint" hidden>玩家视图：墙体会在本地生成视野投影；移动阻挡由 GM 客户端统一处理。</p>
+      <div class="card-head"><h2>模块状态</h2><span class="tag">统一管理</span></div>
+      <div class="module-row"><span class="module-name">地图与墙体</span><span class="tag">已启用</span></div>
+      <div class="module-row"><span class="module-name">选择与移动</span><span class="tag">已启用</span></div>
+      <div class="module-row"><span class="module-name">动态光照与迷雾</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">角色卡与战斗</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">行动资源与骰子</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">日志、音乐与演出</span><span class="tag planned">规划中</span></div>
     </section>
-    <section class="card" data-gm-only>
-      <div class="card-head"><h2>绘制设置</h2><span class="tag">即时生效</span></div>
-      <div class="segmented"><button id="snap-free">自由绘制</button><button id="snap-grid">网格吸附</button></div>
-      <div class="setting-row">
-        <div class="setting-copy"><strong>端点吸附</strong><small>靠近现有墙体端点时自动连接；不依赖网格吸附。</small></div>
-        <input id="endpoint-snap" type="checkbox" />
-      </div>
-      <div class="setting-row">
-        <div class="setting-copy"><strong>GM 墙体辅助线</strong><small>仅在 GM 本地显示，不会同步给玩家。</small></div>
-        <input id="guides-visible" type="checkbox" />
-      </div>
-      <p class="hint">绘制时按住 Ctrl（macOS 为 Cmd）可临时关闭网格吸附。自由绘制默认不吸附网格。</p>
-    </section>
-    <section class="card" data-gm-only>
-      <div class="card-head"><h2>墙体操作</h2><span class="tag">场景级</span></div>
-      <div class="button-grid">
-        <button id="edit-wall">编辑选中墙体属性</button>
-        <button id="undo">撤销</button>
-        <button id="redo">重做</button>
-      </div>
-      <button id="clear-walls" class="danger">清空本场景墙体</button>
-      <div id="action-status" role="status">选择墙体后可编辑属性；普通操作不会弹出通知。</div>
-    </section>
+
     <section class="card">
-      <div class="card-head"><h2>模块进度</h2><span class="tag">单一扩展 · 内部模块化</span></div>
-      <div class="module-row"><span>地图构造与墙体编辑</span><span class="tag">当前阶段</span></div>
-      <div class="module-row"><span>门窗与空间查询</span><span class="tag planned">后续阶段</span></div>
-      <div class="module-row"><span>动态光照与迷雾</span><span class="tag planned">后续阶段</span></div>
-      <div class="module-row"><span>角色卡与战斗</span><span class="tag planned">后续阶段</span></div>
-      <div class="module-row"><span>日志、音乐与演出</span><span class="tag planned">后续阶段</span></div>
+      <div class="card-head"><h2>当前客户端</h2><span class="tag">运行状态</span></div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>当前活动工具</strong><small id="active-tool-id">读取中…</small></div>
+      </div>
+      <p class="hint" id="client-hint">工具设置由各模块自己的悬浮窗管理，不在总设置中展开。</p>
     </section>
-    <div class="legacy-note" data-gm-only>如果仍看到两套墙体工具图标，或每次保存、删除都弹出成功通知，请在 Owlbear 扩展管理中停用旧版 WallBrush。旧版会独立注册工具并发送操作通知。</div>
   </main>
-  <footer>共享 LINE 保存权威墙体数据；各客户端本地 WALL 仅作为视野投影。移动阻挡由共享墙体几何独立计算，不借用原生光照碰撞。</footer>
+
+  <footer>Beholder VTT 0.0.9 · 模块化 TRPG 工具集</footer>
   <script type="module" src="./control.js"></script>
 </body>
 </html>

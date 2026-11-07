@@ -3,7 +3,8 @@ export const PREFERENCES = {
   guides: "beholder-vtt:guides-visible",
   snap: "beholder-vtt:grid-snap",
   endpointSnap: "beholder-vtt:endpoint-snap",
-  selectToolId: "beholder-vtt:native-select-tool-id",
+  groupMovement: "beholder-vtt:group-movement",
+  movementTakeover: "beholder-vtt:movement-takeover",
 } as const;
 
 export function readBooleanPreference(key: string, fallback: boolean): boolean {

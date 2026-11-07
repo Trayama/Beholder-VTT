@@ -191,6 +191,7 @@ export interface OBRApi {
   };
   tool: {
     create(tool: ToolDefinition): Promise<void>;
+    activateTool(id: string): Promise<void>;
     createMode(mode: ToolModeDefinition): Promise<void>;
     remove(id: string): Promise<void>;
     removeMode(id: string): Promise<void>;
