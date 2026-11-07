@@ -13,7 +13,16 @@ The old behavior that redirected the official Move button to Beholder's separate
 
 ## Automated validation
 
-Pending GitHub Actions for this commit.
+GitHub Actions run: [42403592882](https://github.com/Trayama/Beholder-VTT/actions/runs/42403592882)  
+Commit: `335fa22667ccd1e3baa94e74991045e4659845cd`
+
+| Check | Result |
+|---|---|
+| TypeScript type check | PASS |
+| Production build | PASS |
+| Unit tests | PASS — 23 passed, 0 failed |
+| GitHub Pages deployment | PASS |
+| Published manifest version | 0.0.10 |
 
 ## Real Owlbear room verification — required
 
