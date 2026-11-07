@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beholder VTT</title>
+  <title>Beholder VTT 控制台</title>
   <style>
     :root {
       color-scheme: dark;
@@ -14,105 +14,61 @@
       --panel-soft: #252d39;
       --line: #343e4c;
       --muted: #98a4b5;
-      --accent: #a58af4;
-      --accent-soft: #342c4c;
+      --accent: #9b80e8;
       --gold: #d5b574;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 16px; min-width: 300px; }
+    [hidden] { display: none !important; }
+    body { margin: 0; padding: 13px; min-width: 300px; }
     button, input { font: inherit; }
     button { cursor: pointer; }
-    header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-    .mark {
-      width:34px; height:34px; border-radius:10px; display:grid; place-items:center;
-      background:linear-gradient(145deg,#b39af8,#7354ca); color:#fff; font-weight:900;
-      box-shadow:0 5px 18px #0004;
-    }
+    header { display:flex; align-items:center; gap:10px; margin:1px 1px 12px; }
+    .mark { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; background:linear-gradient(145deg,#b39af8,#7354ca); color:#fff; font-weight:900; box-shadow:0 5px 18px #0004; }
     .brand { font-size:13px; font-weight:850; letter-spacing:.12em; }
-    .subtitle { color:var(--muted); font-size:10px; letter-spacing:.08em; margin-top:3px; }
+    .subtitle { color:var(--muted); font-size:9px; letter-spacing:.09em; margin-top:3px; }
     .version { margin-left:auto; color:#8d99aa; font-size:10px; }
-    .statusbar {
-      display:flex; align-items:center; gap:9px; border:1px solid var(--line);
-      background:var(--panel); border-radius:10px; padding:10px 11px; margin-bottom:12px;
-    }
-    .dot { width:7px; height:7px; border-radius:50%; background:#6dbb92; box-shadow:0 0 0 3px #6dbb9222; }
+    .statusbar { display:flex; align-items:center; gap:9px; border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:9px 10px; margin-bottom:10px; }
+    .dot { width:7px; height:7px; flex:0 0 auto; border-radius:50%; background:#6dbb92; box-shadow:0 0 0 3px #6dbb9222; }
     .statuscopy { min-width:0; }
     .statuscopy strong { display:block; font-size:11px; }
-    .statuscopy small { display:block; color:var(--muted); font-size:10px; margin-top:2px; }
+    .statuscopy small { display:block; color:var(--muted); font-size:9px; margin-top:2px; }
     .stats { display:flex; gap:12px; margin-left:auto; }
-    .stat { text-align:center; min-width:34px; }
+    .stat { text-align:center; min-width:30px; }
     .stat b { display:block; font-size:14px; line-height:1.1; }
     .stat small { display:block; color:var(--muted); font-size:9px; margin-top:3px; }
-    nav { display:flex; gap:4px; padding:3px; background:#141820; border-radius:9px; margin-bottom:13px; }
-    nav button {
-      flex:1; border:0; border-radius:7px; background:transparent; color:var(--muted);
-      padding:8px 6px; font-size:11px; font-weight:650;
-    }
-    nav button.active { background:#303846; color:#fff; box-shadow:0 1px 3px #0004; }
-    main { max-height:390px; overflow:auto; padding-right:2px; }
-    [hidden] { display:none !important; }
-    .section-title { color:#c5ceda; font-size:10px; letter-spacing:.1em; font-weight:800; margin:3px 2px 9px; }
-    .card {
-      border:1px solid var(--line); background:var(--panel); border-radius:11px;
-      padding:12px; margin-bottom:10px;
-    }
-    .module-head { display:flex; align-items:center; gap:10px; }
-    .module-icon {
-      width:32px; height:32px; display:grid; place-items:center; border-radius:9px;
-      background:var(--accent-soft); color:#c8b8ff; font-size:14px; font-weight:800;
-    }
-    .module-copy { min-width:0; flex:1; }
-    .module-copy strong { display:block; font-size:12px; }
-    .module-copy small { display:block; color:var(--muted); font-size:10px; margin-top:3px; }
-    .tag { color:#82c7a1; font-size:10px; white-space:nowrap; }
+    main { max-height:390px; overflow:auto; padding:0 2px 2px 0; }
+    .card { border:1px solid var(--line); background:var(--panel); border-radius:11px; padding:11px 12px; margin-bottom:9px; }
+    .card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
+    h2 { margin:0; color:#dce3ec; font-size:11px; font-weight:800; letter-spacing:.04em; }
+    .tag { color:#82c7a1; font-size:9px; white-space:nowrap; }
     .tag.planned { color:#a2adbc; }
-    .toolbar-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:13px 0 10px; }
-    .toolbar-row span { color:#d5dce6; font-size:11px; font-weight:650; }
-    .primary {
-      border:1px solid #9278dc; background:#9278dc; color:#fff; border-radius:7px;
-      padding:7px 10px; font-size:10px; font-weight:750;
-    }
-    .quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:9px; }
-    .quick-grid button {
-      border:1px solid var(--line); background:var(--panel-soft); color:#dfe5ed;
-      border-radius:8px; padding:9px; font-size:11px;
-    }
-    .quick-grid button span { color:var(--gold); font-size:15px; margin-right:6px; }
-    button:disabled { opacity:.35; cursor:default; }
-    .danger {
-      width:100%; border:1px solid #65464c; background:#32252b; color:#e6a5a7;
-      border-radius:8px; padding:9px; font-size:10px; font-weight:700;
-    }
-    .danger.armed { border-color:#d38a63; background:#463127; color:#f0c38d; }
-    .hint { color:#8e9aac; font-size:10px; line-height:1.5; margin:9px 2px 2px; }
-    .setting-row {
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:11px 2px; border-bottom:1px solid #303946;
-    }
-    .setting-row:last-child { border-bottom:0; }
+    .toolbar-row { display:flex; align-items:center; justify-content:space-between; gap:9px; }
+    .toolbar-row strong { display:block; font-size:11px; }
+    .toolbar-row small { display:block; color:var(--muted); font-size:9px; margin-top:3px; }
+    .primary { border:1px solid #9278dc; background:#9278dc; color:#fff; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:750; white-space:nowrap; }
+    .segmented { display:flex; gap:4px; padding:3px; background:#151a22; border:1px solid var(--line); border-radius:8px; }
+    .segmented button { flex:1; border:0; border-radius:6px; background:transparent; color:var(--muted); padding:8px 7px; font-size:11px; font-weight:700; }
+    .segmented button.active { color:#fff; background:#6852a6; box-shadow:0 1px 3px #0004; }
+    .setting-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 1px; border-top:1px solid #303946; }
     .setting-copy { min-width:0; }
-    .setting-copy strong { display:block; font-size:11px; }
-    .setting-copy small { display:block; color:var(--muted); font-size:9px; margin-top:4px; line-height:1.4; }
-    .segmented { display:flex; border:1px solid var(--line); border-radius:7px; padding:2px; background:#151a22; flex:0 0 auto; }
-    .segmented button {
-      border:0; border-radius:5px; background:transparent; color:var(--muted);
-      padding:6px 9px; font-size:10px;
-    }
-    .segmented button.active { color:#fff; background:#6852a6; }
-    input[type=checkbox] {
-      appearance:none; width:34px; height:19px; flex:0 0 auto; border-radius:12px;
-      background:#4a5564; position:relative; cursor:pointer; transition:.15s;
-    }
-    input[type=checkbox]::after {
-      content:""; position:absolute; left:3px; top:3px; width:13px; height:13px;
-      border-radius:50%; background:#fff; transition:.15s;
-    }
+    .setting-copy strong { display:block; font-size:10px; }
+    .setting-copy small { display:block; color:var(--muted); font-size:9px; margin-top:3px; line-height:1.4; }
+    input[type=checkbox] { appearance:none; width:34px; height:19px; flex:0 0 auto; border-radius:12px; background:#4a5564; position:relative; cursor:pointer; transition:.15s; }
+    input[type=checkbox]::after { content:""; position:absolute; left:3px; top:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.15s; }
     input[type=checkbox]:checked { background:#8c72d3; }
     input[type=checkbox]:checked::after { transform:translateX(15px); }
-    .module-list { display:grid; gap:7px; }
-    .module-list .card { margin:0; padding:10px 11px; }
-    .footer { border-top:1px solid #303946; margin-top:13px; padding-top:10px; color:#7f8b9b; font-size:9px; line-height:1.5; }
-    @media (max-width:340px) { body { padding:12px; } .statusbar { gap:6px; } .stats { gap:7px; } }
+    .button-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:8px; }
+    .button-grid button, .secondary { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:8px 9px; font-size:10px; font-weight:650; }
+    .button-grid button:first-child { grid-column:1 / -1; }
+    .danger { width:100%; border:1px solid #65464c; background:#32252b; color:#e6a5a7; border-radius:7px; padding:8px; font-size:10px; font-weight:700; }
+    .danger.armed { border-color:#d38a63; background:#463127; color:#f0c38d; }
+    button:disabled { opacity:.35; cursor:default; }
+    #action-status { min-height:14px; color:#d5b574; font-size:9px; line-height:1.4; margin:8px 1px 0; }
+    .module-row { display:flex; justify-content:space-between; align-items:center; padding:6px 1px; font-size:10px; }
+    .module-row + .module-row { border-top:1px solid #303946; }
+    .hint { color:#8e9aac; font-size:9px; line-height:1.5; margin:8px 1px 0; }
+    .legacy-note { border:1px solid #5b4b32; background:#2d281f; color:#d8c49c; border-radius:8px; padding:8px 9px; font-size:9px; line-height:1.5; margin:8px 0; }
+    footer { border-top:1px solid #303946; margin-top:8px; padding:9px 1px 0; color:#7f8b9b; font-size:9px; line-height:1.5; }
   </style>
   <script type="importmap">
     { "imports": { "@owlbear-rodeo/sdk": "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@3.1.0/+esm" } }
@@ -121,92 +77,60 @@
 <body>
   <header>
     <div class="mark">B</div>
-    <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">TABLETOP TOOLKIT</div></div>
-    <div class="version">0.0.5</div>
+    <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">TRPG TABLETOP TOOLKIT</div></div>
+    <div class="version">0.0.6</div>
   </header>
-
   <div class="statusbar">
     <div class="dot" id="scene-dot"></div>
-    <div class="statuscopy">
-      <strong id="scene-label">正在连接场景…</strong>
-      <small id="role-label">正在读取身份…</small>
-    </div>
+    <div class="statuscopy"><strong id="scene-label">正在连接场景…</strong><small id="role-label">正在读取身份…</small></div>
     <div class="stats">
       <div class="stat"><b id="wall-count">—</b><small>墙体</small></div>
       <div class="stat"><b id="token-count">—</b><small>棋子</small></div>
     </div>
   </div>
-
-  <nav>
-    <button class="active" data-tab="map">地图</button>
-    <button data-tab="settings">设置</button>
-    <button data-tab="modules">模块</button>
-  </nav>
-
   <main>
-    <section data-panel="map">
-      <div class="section-title">当前场景</div>
-      <article class="card">
-        <div class="module-head">
-          <div class="module-icon">W</div>
-          <div class="module-copy"><strong>墙体编辑器</strong><small>绘制、连接、编辑与碰撞阻挡</small></div>
-          <span class="tag">已启用</span>
-        </div>
-        <div class="toolbar-row" data-gm-only>
-          <span>右侧地图编辑工具</span>
-          <button id="toolbar-toggle" class="primary">隐藏工具</button>
-        </div>
-      </article>
-
-      <div class="section-title">场景操作</div>
-      <div class="quick-grid" data-gm-only>
-        <button id="undo"><span>↶</span>撤销</button>
-        <button id="redo"><span>↷</span>重做</button>
+    <section class="card">
+      <div class="card-head"><h2>地图工具</h2><span class="tag">GM 控制</span></div>
+      <div class="toolbar-row" data-gm-only>
+        <div><strong>右侧墙体编辑工具</strong><small>选择、直线、折线、矩形、橡皮擦</small></div>
+        <button id="toolbar-toggle" class="primary">隐藏工具</button>
       </div>
-      <button id="clear-walls" class="danger" data-gm-only>清空本场景墙体</button>
-      <p class="hint" data-gm-only>右侧工具提供：选择 / 移动、直线、折线、矩形、橡皮擦。选择墙体后，右侧的属性按钮可编辑三种阻挡属性。</p>
-      <p class="hint" id="player-hint" hidden>墙体由房主管理。场景同步后，墙体移动限制会在本地生效。</p>
+      <p class="hint" id="player-hint" hidden>玩家视图：墙体会在本地生成视野投影；移动阻挡由 GM 客户端统一处理。</p>
     </section>
-
-    <section data-panel="settings" hidden>
-      <div class="section-title">绘制方式</div>
-      <article class="card">
-        <div class="setting-row">
-          <div class="setting-copy"><strong>光标吸附</strong><small>自由绘制不受网格约束；网格模式按场景网格定位。</small></div>
-          <div class="segmented"><button id="snap-free">自由</button><button id="snap-grid">网格</button></div>
-        </div>
-        <div class="setting-row" data-gm-only>
-          <div class="setting-copy"><strong>端点吸附</strong><small>靠近已有墙体端点时自动连接。</small></div>
-          <input id="endpoint-snap" type="checkbox" />
-        </div>
-      </article>
-      <div class="section-title">场景显示与规则</div>
-      <article class="card">
-        <div class="setting-row" data-gm-only>
-          <div class="setting-copy"><strong>GM 墙体辅助线</strong><small>仅在房主本地显示，不同步给玩家。</small></div>
-          <input id="guides-visible" type="checkbox" />
-        </div>
-        <div class="setting-row">
-          <div class="setting-copy"><strong>墙体移动阻挡</strong><small>由每段墙体的属性独立决定，碰撞限制在移动端本地执行。</small></div>
-          <span class="tag">已启用</span>
-        </div>
-      </article>
-    </section>
-
-    <section data-panel="modules" hidden>
-      <div class="section-title">模块状态</div>
-      <div class="module-list">
-        <article class="card"><div class="module-head"><div class="module-icon">W</div><div class="module-copy"><strong>地图构造</strong><small>墙体绘制、编辑、属性与移动阻挡</small></div><span class="tag">当前阶段</span></div></article>
-        <article class="card"><div class="module-head"><div class="module-icon">D</div><div class="module-copy"><strong>门与窗户</strong><small>墙体开口、开关状态与锚点</small></div><span class="tag planned">规划中</span></div></article>
-        <article class="card"><div class="module-head"><div class="module-icon">L</div><div class="module-copy"><strong>动态光照</strong><small>光源、遮挡与亮度配置</small></div><span class="tag planned">规划中</span></div></article>
-        <article class="card"><div class="module-head"><div class="module-icon">F</div><div class="module-copy"><strong>动态迷雾</strong><small>视野、迷雾与探索状态</small></div><span class="tag planned">规划中</span></div></article>
-        <article class="card"><div class="module-head"><div class="module-icon">C</div><div class="module-copy"><strong>角色与战斗</strong><small>角色卡、动作、骰子与资源追踪</small></div><span class="tag planned">规划中</span></div></article>
-        <article class="card"><div class="module-head"><div class="module-icon">P</div><div class="module-copy"><strong>演出工具</strong><small>日志、音乐、转场与事件控制</small></div><span class="tag planned">规划中</span></div></article>
+    <section class="card" data-gm-only>
+      <div class="card-head"><h2>绘制设置</h2><span class="tag">即时生效</span></div>
+      <div class="segmented"><button id="snap-free">自由绘制</button><button id="snap-grid">网格吸附</button></div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>端点吸附</strong><small>靠近现有墙体端点时自动连接；不依赖网格吸附。</small></div>
+        <input id="endpoint-snap" type="checkbox" />
       </div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>GM 墙体辅助线</strong><small>仅在 GM 本地显示，不会同步给玩家。</small></div>
+        <input id="guides-visible" type="checkbox" />
+      </div>
+      <p class="hint">绘制时按住 Ctrl（macOS 为 Cmd）可临时关闭网格吸附。自由绘制默认不吸附网格。</p>
     </section>
+    <section class="card" data-gm-only>
+      <div class="card-head"><h2>墙体操作</h2><span class="tag">场景级</span></div>
+      <div class="button-grid">
+        <button id="edit-wall">编辑选中墙体属性</button>
+        <button id="undo">撤销</button>
+        <button id="redo">重做</button>
+      </div>
+      <button id="clear-walls" class="danger">清空本场景墙体</button>
+      <div id="action-status" role="status">选择墙体后可编辑属性；普通操作不会弹出通知。</div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>模块进度</h2><span class="tag">单一扩展 · 内部模块化</span></div>
+      <div class="module-row"><span>地图构造与墙体编辑</span><span class="tag">当前阶段</span></div>
+      <div class="module-row"><span>门窗与空间查询</span><span class="tag planned">后续阶段</span></div>
+      <div class="module-row"><span>动态光照与迷雾</span><span class="tag planned">后续阶段</span></div>
+      <div class="module-row"><span>角色卡与战斗</span><span class="tag planned">后续阶段</span></div>
+      <div class="module-row"><span>日志、音乐与演出</span><span class="tag planned">后续阶段</span></div>
+    </section>
+    <div class="legacy-note" data-gm-only>如果仍看到两套墙体工具图标，或每次保存、删除都弹出成功通知，请在 Owlbear 扩展管理中停用旧版 WallBrush。旧版会独立注册工具并发送操作通知。</div>
   </main>
-
-  <div class="footer">设置保存在当前客户端。墙体几何与属性保存在共享场景；辅助线和显示偏好不会发送给玩家。</div>
+  <footer>共享 LINE 保存权威墙体数据；各客户端本地 WALL 仅作为视野投影。移动阻挡由 GM 端独立计算，不借用原生光照碰撞。</footer>
   <script type="module" src="./control.js"></script>
 </body>
 </html>

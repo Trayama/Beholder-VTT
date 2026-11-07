@@ -27,6 +27,7 @@
 - [x] Endpoint and connected-node editing.
 - [x] Eraser and whole-wall deletion.
 - [x] Undo/redo actions.
+- [x] Free positioning and optional grid snapping.
 - [ ] Endpoint snapping and automatic connections.
 - [ ] Junction and seam tests.
 - [ ] Real-room interaction and persistence acceptance.
@@ -37,8 +38,10 @@
 - [ ] Door state changes.
 - [ ] Wall-relative opening anchors.
 - [x] Independent movement, vision, and light blocking metadata.
-- [ ] Movement collision and light-blocking adapters.
+- [x] GM-authoritative post-commit movement correction.
+- [ ] Independent light-blocking adapter.
 - [ ] Shared spatial query interface.
+- [ ] GM/player movement-collision acceptance, including MOUNT tokens and multiple simultaneous moves.
 
 ## Phase 1D — Dynamic light and fog
 

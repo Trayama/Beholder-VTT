@@ -11,13 +11,13 @@
     header { display:flex; align-items:center; gap:9px; margin-bottom:6px; }
     .mark { width:27px; height:27px; border-radius:8px; display:grid; place-items:center; background:#6651a5; color:#fff; font-weight:800; }
     h1 { font-size:14px; margin:0; }
-    .sub { color:#98a4b5; font-size:10px; margin:3px 0 14px; line-height:1.45; }
+    .sub { color:#98a4b5; font-size:10px; margin:3px 0 14px; line-height:1.5; }
     .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 2px; border-top:1px solid #343e4c; }
     .copy { min-width:0; }
     .copy strong { display:block; font-size:12px; }
-    .copy small { display:block; color:#98a4b5; font-size:9px; margin-top:4px; line-height:1.4; }
+    .copy small { display:block; color:#98a4b5; font-size:9px; margin-top:4px; line-height:1.45; }
     input { width:17px; height:17px; accent-color:#9a7be8; flex:0 0 auto; }
-    #status { min-height:17px; color:#d5b574; font-size:10px; margin:10px 0 2px; }
+    #status { min-height:22px; color:#d5b574; font-size:10px; margin:10px 0 2px; line-height:1.45; }
     footer { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
     button { border:1px solid #465262; background:#29323e; color:#e9edf4; border-radius:7px; padding:7px 13px; cursor:pointer; font-size:11px; }
     button.primary { background:#8e73d5; border-color:#8e73d5; color:#fff; font-weight:700; }
@@ -29,17 +29,17 @@
 </head>
 <body>
   <header><div class="mark">W</div><h1>墙体属性</h1></header>
-  <p class="sub">设置应用于整条连续墙体。三项阻挡分别保存，不互相覆盖。</p>
+  <p class="sub">三种阻挡分别保存，互不联动。属性应用于整条连续墙体。</p>
   <div class="row">
-    <div class="copy"><strong>阻挡棋子移动</strong><small>启用后，棋子不能穿过这段墙体。</small></div>
+    <div class="copy"><strong>阻挡棋子移动</strong><small>由 GM 客户端检测穿墙移动并纠正到最后安全位置；原生拖动结束后可能短暂回弹。</small></div>
     <input id="blocks-movement" type="checkbox" />
   </div>
   <div class="row">
-    <div class="copy"><strong>阻挡视野</strong><small>通过本地墙体投影生成视野阴影。</small></div>
+    <div class="copy"><strong>阻挡视野</strong><small>由各客户端的本地 WALL 投影提供视野遮挡，不决定棋子移动。</small></div>
     <input id="blocks-vision" type="checkbox" />
   </div>
   <div class="row">
-    <div class="copy"><strong>阻挡光线</strong><small>属性已独立保存；动态光源碰撞适配器仍在开发。</small></div>
+    <div class="copy"><strong>阻挡光线</strong><small>独立保存的光照属性；后续由光照适配器读取，不借用移动碰撞。</small></div>
     <input id="blocks-light" type="checkbox" />
   </div>
   <div id="status">正在读取墙体…</div>

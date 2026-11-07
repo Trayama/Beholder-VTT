@@ -15,41 +15,49 @@ interface TokenSnapshot {
 }
 
 const ZERO: Vector2 = { x: 0, y: 0 };
+const UNIT: Vector2 = { x: 1, y: 1 };
 
 function sameVector(a: Vector2, b: Vector2): boolean {
   return Math.abs(a.x - b.x) < 0.001 && Math.abs(a.y - b.y) < 0.001;
 }
 
-function sameScale(a: Vector2, b: Vector2): boolean {
-  return sameVector(a, b);
+function isMovableToken(item: SceneItem): boolean {
+  return item.type === "IMAGE" && (item.layer === "CHARACTER" || item.layer === "MOUNT");
 }
 
 /**
- * Enforces blocksMovement independently from Owlbear's native WALL.blocking
- * flag. Native WALL.blocking couples token and light collision, so Beholder
- * keeps that flag off and resolves token movement from the shared LINE source.
+ * Independent movement collision.
  *
- * Owlbear exposes committed scene-item changes rather than a cancellable
- * before-move hook. The guard therefore corrects the local mover's position
- * to the last safe point as soon as a moved token is reported by the scene.
+ * Only the GM client is authoritative. Owlbear's scene item change event
+ * includes the full scene after a committed move, so the GM compares token
+ * positions with the previous safe snapshot and corrects crossings from the
+ * shared LINE wall geometry.
+ *
+ * This is deliberately separate from native WALL.blocking: that native flag
+ * also affects light collision. Beholder keeps movement, vision and light
+ * properties independent. The correction happens after Owlbear commits the
+ * drag, so clients may see a brief snap-back; the SDK has no global
+ * cancellable before-move hook for the native Select tool.
  */
 export class MovementBlocker {
   private readonly snapshots = new Map<string, TokenSnapshot>();
   private readonly unsubscribers: Array<() => void> = [];
-  private playerId = "";
   private disposed = false;
   private processing = false;
   private pendingItems: SceneItem[] | null = null;
-  private walls: WallSegment2D[] = [];
 
   async start(): Promise<void> {
-    this.playerId = await OBR.player.getId();
+    const role = await OBR.player.getRole();
+    if (role !== "GM") {
+      logger.info("Movement collision is enforced by the GM client.");
+      return;
+    }
+
     this.unsubscribers.push(
       OBR.scene.items.onChange((items) => this.enqueue(items)),
       OBR.scene.onReadyChange((ready) => {
         if (!ready) {
           this.snapshots.clear();
-          this.walls = [];
           this.pendingItems = null;
           return;
         }
@@ -104,7 +112,7 @@ export class MovementBlocker {
       const metadata = readWallSourceMetadata(source);
       if (!metadata?.blocking.blocksMovement) return [];
       const position = source.position ?? ZERO;
-      const scale = source.scale ?? { x: 1, y: 1 };
+      const scale = source.scale ?? UNIT;
       const rotation = source.rotation ?? 0;
       return [{
         start: transformPoint(source.startPosition, position, rotation, scale),
@@ -117,14 +125,19 @@ export class MovementBlocker {
     const position = { ...item.position };
     const scale = { ...item.scale };
     let center = { ...position };
-    let radius = 0;
+    let radius = 18;
+
     try {
       const bounds = await OBR.scene.items.getItemBounds([item.id]);
       center = { ...bounds.center };
-      radius = Math.max(0, Math.min(bounds.width, bounds.height) / 2);
+      const measuredRadius = Math.min(bounds.width, bounds.height) * 0.4;
+      if (Number.isFinite(measuredRadius) && measuredRadius >= 2) {
+        radius = measuredRadius;
+      }
     } catch (error) {
-      logger.debug("Token bounds unavailable; using center-point collision.", { itemId: item.id, error });
+      logger.debug("Token bounds unavailable; using fallback collision radius.", { itemId: item.id, error });
     }
+
     return {
       position,
       center,
@@ -138,14 +151,14 @@ export class MovementBlocker {
   private async process(items: SceneItem[]): Promise<void> {
     if (!(await OBR.scene.isReady())) return;
 
-    this.walls = this.wallSegments(items);
-    const tokens = items.filter((item) => item.layer === "CHARACTER" && item.type === "IMAGE");
-    const presentIds = new Set(tokens.map((item) => item.id));
+    const walls = this.wallSegments(items);
+    const tokens = items.filter(isMovableToken);
+    const presentIds = new Set(tokens.map((token) => token.id));
+
     for (const id of this.snapshots.keys()) {
       if (!presentIds.has(id)) this.snapshots.delete(id);
     }
 
-    let localSelection: string[] | undefined;
     for (const token of tokens) {
       const previous = this.snapshots.get(token.id);
       if (!previous) {
@@ -154,7 +167,9 @@ export class MovementBlocker {
       }
 
       const positionChanged = !sameVector(token.position, previous.position);
-      const transformChanged = token.rotation !== previous.rotation || !sameScale(token.scale, previous.scale);
+      const transformChanged = token.rotation !== previous.rotation ||
+        !sameVector(token.scale, previous.scale);
+
       if (!positionChanged && !transformChanged) continue;
 
       const current = transformChanged
@@ -168,23 +183,12 @@ export class MovementBlocker {
             },
           };
 
-      if (!positionChanged) {
+      if (!positionChanged || walls.length === 0) {
         this.snapshots.set(token.id, current);
         continue;
       }
 
-      let movedByThisPlayer = token.lastModifiedUserId === this.playerId;
-      if (!movedByThisPlayer && !token.lastModifiedUserId) {
-        localSelection ??= await OBR.player.getSelection();
-        movedByThisPlayer = localSelection?.includes(token.id) ?? false;
-      }
-
-      if (!movedByThisPlayer || this.walls.length === 0) {
-        this.snapshots.set(token.id, current);
-        continue;
-      }
-
-      const safeCenter = constrainMovement(previous.center, current.center, this.walls, current.radius);
+      const safeCenter = constrainMovement(previous.center, current.center, walls, current.radius);
       if (!safeCenter) {
         this.snapshots.set(token.id, current);
         continue;
@@ -194,16 +198,24 @@ export class MovementBlocker {
         x: token.position.x + safeCenter.x - current.center.x,
         y: token.position.y + safeCenter.y - current.center.y,
       };
-      this.snapshots.set(token.id, {
+      const correctedSnapshot: TokenSnapshot = {
         ...current,
         position: correctedPosition,
         center: safeCenter,
-      });
+      };
+
+      // Update the snapshot before writing, so our own correction event does
+      // not get interpreted as a fresh attempted move.
+      this.snapshots.set(token.id, correctedSnapshot);
 
       try {
-        await OBR.scene.items.updateItems((item) => item.id === token.id, (drafts) => {
-          for (const draft of drafts) draft.position = correctedPosition;
-        });
+        await OBR.scene.items.updateItems(
+          (item) => item.id === token.id,
+          (drafts) => {
+            for (const draft of drafts) draft.position = correctedPosition;
+          },
+        );
+        logger.debug("Token movement corrected at wall boundary.", { itemId: token.id });
       } catch (error) {
         this.snapshots.set(token.id, previous);
         logger.warn("A token could not be returned to its last safe position.", { itemId: token.id, error });

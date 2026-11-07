@@ -19,7 +19,7 @@ const PROPERTIES_ACTION_ID = TOOL_ID + "/properties";
 const PROPERTIES_POPOVER_ID = "com.beholder-vtt/wall-properties";
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
-const MODE_IDS = [DRAW_MODE_ID, POLYLINE_MODE_ID, RECTANGLE_MODE_ID, SELECT_MODE_ID, ERASE_MODE_ID];
+const MODE_IDS = [SELECT_MODE_ID, DRAW_MODE_ID, POLYLINE_MODE_ID, RECTANGLE_MODE_ID, ERASE_MODE_ID];
 const ACTION_IDS = [PROPERTIES_ACTION_ID];
 
 interface WallHit {
@@ -199,7 +199,7 @@ export class WallDrawTool {
   }
 
   private async registerActions(): Promise<void> {
-    const filter = { activeTools: [TOOL_ID], activeModes: [SELECT_MODE_ID], roles: ["GM" as const] };
+    const filter = { activeTools: [TOOL_ID], roles: ["GM" as const] };
     await OBR.tool.createAction({
       id: PROPERTIES_ACTION_ID,
       icons: [{
@@ -211,9 +211,9 @@ export class WallDrawTool {
     });
   }
 
-  private async snap(point: Vector2, allowEndpointSnap = false): Promise<Vector2> {
+  private async snap(point: Vector2, allowEndpointSnap = false, bypassGrid = false): Promise<Vector2> {
     let snapped = point;
-    if (this.snapToGrid) {
+    if (this.snapToGrid && !bypassGrid) {
       try {
         snapped = await OBR.scene.grid.snapPosition(point, 1, true, false);
       } catch (error) {
@@ -300,7 +300,7 @@ export class WallDrawTool {
   private async startLine(event: ToolEvent): Promise<void> {
     await this.cancelLine();
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return;
-    const start = await this.snap(event.pointerPosition, true);
+    const start = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     this.dragStart = start;
     const preview = this.previewLine(start, start);
     await OBR.scene.local.addItems([preview]);
@@ -309,7 +309,7 @@ export class WallDrawTool {
 
   private async moveLine(event: ToolEvent): Promise<void> {
     if (!this.dragStart || !this.linePreviewId) return;
-    const end = await this.snap(event.pointerPosition, true);
+    const end = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     await this.updatePreviewLines([this.linePreviewId], [{ start: this.dragStart, end }]);
   }
 
@@ -317,7 +317,7 @@ export class WallDrawTool {
     const start = this.dragStart;
     this.dragStart = null;
     if (!start) return;
-    const end = await this.snap(event.pointerPosition, true);
+    const end = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     const id = this.linePreviewId;
     this.linePreviewId = null;
     if (id) await this.removePreviews([id]);
@@ -337,7 +337,7 @@ export class WallDrawTool {
 
   private async addPolylinePoint(event: ToolEvent): Promise<boolean> {
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return false;
-    const point = await this.snap(event.pointerPosition, true);
+    const point = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     const last = this.polylinePoints[this.polylinePoints.length - 1];
     if (last && Math.hypot(point.x - last.x, point.y - last.y) < 4) return false;
     if (last && this.livePolylinePreviewId) {
@@ -354,7 +354,7 @@ export class WallDrawTool {
   private async movePolylinePreview(event: ToolEvent): Promise<void> {
     const point = this.polylinePoints[this.polylinePoints.length - 1];
     if (!point || !this.livePolylinePreviewId) return;
-    const end = await this.snap(event.pointerPosition, true);
+    const end = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     await this.updatePreviewLines([this.livePolylinePreviewId], [{ start: point, end }]);
   }
 
@@ -384,7 +384,7 @@ export class WallDrawTool {
   private async startRectangle(event: ToolEvent): Promise<void> {
     await this.cancelRectangle();
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return;
-    this.dragStart = await this.snap(event.pointerPosition, true);
+    this.dragStart = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     const points = this.rectanglePoints(this.dragStart, this.dragStart);
     const previews = points.slice(0, 4).map((point, index) => this.previewLine(point, points[index + 1]!));
     await OBR.scene.local.addItems(previews);
@@ -393,7 +393,7 @@ export class WallDrawTool {
 
   private async moveRectangle(event: ToolEvent): Promise<void> {
     if (!this.dragStart || this.rectanglePreviewIds.length !== 4) return;
-    const end = await this.snap(event.pointerPosition, true);
+    const end = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     const points = this.rectanglePoints(this.dragStart, end);
     const segments = points.slice(0, 4).map((point, index) => ({ start: point, end: points[index + 1]! }));
     await this.updatePreviewLines(this.rectanglePreviewIds, segments);
@@ -403,7 +403,7 @@ export class WallDrawTool {
     const start = this.dragStart;
     this.dragStart = null;
     if (!start) return;
-    const end = await this.snap(event.pointerPosition, true);
+    const end = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     await this.cancelRectangle();
     if (Math.abs(end.x - start.x) < 4 || Math.abs(end.y - start.y) < 4) return;
     try { await this.saveWall(this.rectanglePoints(start, end)); } catch (error) {
@@ -473,8 +473,6 @@ export class WallDrawTool {
     const hit = await this.nearestWall(point);
     const metadata = hit ? readWallSourceMetadata(hit.source) : null;
     await this.setSelection(metadata?.wallId ?? null);
-    if (metadata) {
-    }
   }
 
   private async startEdit(event: ToolEvent): Promise<void> {
@@ -503,7 +501,7 @@ export class WallDrawTool {
       sources: group,
       mode: node ? "node" : "move",
       node,
-      anchor: await this.snap(event.pointerPosition),
+      anchor: await this.snap(event.pointerPosition, false, event.ctrlKey || event.metaKey),
       previewIds: [],
     };
     const previews = group.map((source) => {
@@ -542,7 +540,7 @@ export class WallDrawTool {
   private async moveEdit(event: ToolEvent): Promise<void> {
     const session = this.editSession;
     if (!session) return;
-    const pointer = await this.snap(event.pointerPosition, true);
+    const pointer = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     const geometry = this.editedGeometry(session, pointer);
     const segments = session.sources.map((source) => geometry.get(source.id) ?? {
       start: source.startPosition,
@@ -555,7 +553,7 @@ export class WallDrawTool {
     const session = this.editSession;
     this.editSession = null;
     if (!session) return;
-    const pointer = await this.snap(event.pointerPosition, true);
+    const pointer = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     const geometry = this.editedGeometry(session, pointer);
     await this.removePreviews(session.previewIds);
     const delta = Math.hypot(pointer.x - session.anchor.x, pointer.y - session.anchor.y);
@@ -608,9 +606,6 @@ export class WallDrawTool {
   }
 
   private async openProperties(elementId: string): Promise<void> {
-    if (!this.selectedWallId) {
-      return;
-    }
     await OBR.popover.open({
       id: PROPERTIES_POPOVER_ID,
       url: this.asset("wall-properties.html"),
