@@ -4,6 +4,7 @@ import { WallReconciler } from "../../scene/walls/reconciler.js";
 import { WallDrawTool } from "./wall-draw-tool.js";
 import { MovementBlocker } from "../../scene/walls/movement-blocker.js";
 import { TokenMovementTool } from "../../scene/walls/movement-tool.js";
+import { NativeSelectIntegration } from "../../scene/walls/native-select.js";
 
 export class WallsModule implements ExtensionModule {
   readonly id = "scene.walls";
@@ -11,17 +12,20 @@ export class WallsModule implements ExtensionModule {
   private readonly tool = new WallDrawTool(this.reconciler);
   private readonly movementBlocker = new MovementBlocker();
   private readonly movementTool = new TokenMovementTool();
+  private readonly nativeSelect = new NativeSelectIntegration();
 
   async start(): Promise<void> {
     this.reconciler.start();
     await this.movementBlocker.start();
     await this.movementTool.start();
+    await this.nativeSelect.start();
     await this.tool.start();
     logger.info("Wall module initialized.");
   }
 
   async stop(): Promise<void> {
     await this.tool.stop();
+    await this.nativeSelect.stop();
     await this.movementTool.stop();
     this.movementBlocker.stop();
     this.reconciler.stop();

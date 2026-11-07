@@ -1,9 +1,9 @@
 {
   "name": "Beholder VTT",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "manifest_version": 1,
   "author": "Trayama",
-  "description": "A modular TRPG toolkit for Owlbear Rodeo. Includes wall authoring and real-time wall-aware token movement.",
+  "description": "A modular TRPG toolkit for Owlbear Rodeo with wall-aware native token movement.",
   "homepage_url": "https://github.com/Trayama/Beholder-VTT",
   "icon": "https://trayama.github.io/Beholder-VTT/icon.svg",
   "background_url": "https://trayama.github.io/Beholder-VTT/background.html",

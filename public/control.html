@@ -46,6 +46,7 @@
     .toolbar-row strong { display:block; font-size:11px; }
     .toolbar-row small { display:block; color:var(--muted); font-size:9px; margin-top:3px; }
     .primary { border:1px solid #9278dc; background:#9278dc; color:#fff; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:750; white-space:nowrap; }
+    .secondary { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:650; white-space:nowrap; }
     .segmented { display:flex; gap:4px; padding:3px; background:#151a22; border:1px solid var(--line); border-radius:8px; }
     .segmented button { flex:1; border:0; border-radius:6px; background:transparent; color:var(--muted); padding:8px 7px; font-size:11px; font-weight:700; }
     .segmented button.active { color:#fff; background:#6852a6; box-shadow:0 1px 3px #0004; }
@@ -58,15 +59,15 @@
     input[type=checkbox]:checked { background:#8c72d3; }
     input[type=checkbox]:checked::after { transform:translateX(15px); }
     .button-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:8px; }
-    .button-grid button, .secondary { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:8px 9px; font-size:10px; font-weight:650; }
+    .button-grid button, .danger { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:8px 9px; font-size:10px; font-weight:650; }
     .button-grid button:first-child { grid-column:1 / -1; }
-    .danger { width:100%; border:1px solid #65464c; background:#32252b; color:#e6a5a7; border-radius:7px; padding:8px; font-size:10px; font-weight:700; }
+    .danger { width:100%; border-color:#65464c; background:#32252b; color:#e6a5a7; font-weight:700; }
     .danger.armed { border-color:#d38a63; background:#463127; color:#f0c38d; }
     button:disabled { opacity:.35; cursor:default; }
     #action-status { min-height:14px; color:#d5b574; font-size:9px; line-height:1.4; margin:8px 1px 0; }
     .module-row { display:flex; justify-content:space-between; align-items:center; padding:6px 1px; font-size:10px; }
     .module-row + .module-row { border-top:1px solid #303946; }
-    .hint { color:#8e9aac; font-size:9px; line-height:1.5; margin:8px 1px 0; }
+    .hint { color:#8e9aac; font-size:9px; line-height:1.5; margin:8px 1px 0; overflow-wrap:anywhere; }
     .legacy-note { border:1px solid #5b4b32; background:#2d281f; color:#d8c49c; border-radius:8px; padding:8px 9px; font-size:9px; line-height:1.5; margin:8px 0; }
     footer { border-top:1px solid #303946; margin-top:8px; padding:9px 1px 0; color:#7f8b9b; font-size:9px; line-height:1.5; }
   </style>
@@ -78,7 +79,7 @@
   <header>
     <div class="mark">B</div>
     <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">TRPG TABLETOP TOOLKIT</div></div>
-    <div class="version">0.0.6</div>
+    <div class="version">0.0.8</div>
   </header>
   <div class="statusbar">
     <div class="dot" id="scene-dot"></div>
@@ -89,6 +90,20 @@
     </div>
   </div>
   <main>
+    <section class="card">
+      <div class="card-head"><h2>原生选择工具集成</h2><span class="tag">实验功能</span></div>
+      <div class="toolbar-row">
+        <div><strong>当前 Owlbear 工具</strong><small id="active-tool-id">读取中…</small></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>已绑定选择工具</strong><small id="bound-tool-id">尚未绑定</small></div>
+      </div>
+      <div class="button-grid">
+        <button id="bind-select-tool" class="primary">绑定当前工具为选择工具</button>
+        <button id="unbind-select-tool" class="secondary">解除绑定</button>
+      </div>
+      <p class="hint" id="select-bind-status">先在 Owlbear 右侧选择原生 Select 工具，再点击绑定。绑定只保存在本客户端；GM 和玩家需要分别绑定一次。若当前工具 ID 以 rodeo.owlbear.tools/select 结尾，插件会自动识别。</p>
+    </section>
     <section class="card">
       <div class="card-head"><h2>地图工具</h2><span class="tag">GM 控制</span></div>
       <div class="toolbar-row" data-gm-only>
@@ -130,7 +145,7 @@
     </section>
     <div class="legacy-note" data-gm-only>如果仍看到两套墙体工具图标，或每次保存、删除都弹出成功通知，请在 Owlbear 扩展管理中停用旧版 WallBrush。旧版会独立注册工具并发送操作通知。</div>
   </main>
-  <footer>共享 LINE 保存权威墙体数据；各客户端本地 WALL 仅作为视野投影。移动阻挡由 GM 端独立计算，不借用原生光照碰撞。</footer>
+  <footer>共享 LINE 保存权威墙体数据；各客户端本地 WALL 仅作为视野投影。移动阻挡由共享墙体几何独立计算，不借用原生光照碰撞。</footer>
   <script type="module" src="./control.js"></script>
 </body>
 </html>

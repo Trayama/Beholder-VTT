@@ -1,45 +1,38 @@
-# Test report — Beholder VTT 0.0.7
+# Test report — Beholder VTT 0.0.8
 
 Date: 2026-11-07
 
 ## Automated validation
 
-GitHub Actions run: [42384023507](https://github.com/Trayama/Beholder-VTT/actions/runs/42384023507)  
-Commit: `edc38dbdacf7aec48cac34c1645754f9102318df`
+GitHub Actions validation is pending for this commit. Update this section with the exact workflow run, commit SHA, test count, and Pages deployment result after CI completes.
 
-| Check | Result |
-|---|---|
-| TypeScript type check | PASS |
-| Production build | PASS |
-| Unit tests | PASS — 18 passed, 0 failed |
-| GitHub Pages build | PASS |
-| GitHub Pages deployment | PASS |
-| Published manifest version | 0.0.7 |
+## 0.0.8 changes
 
-## 0.0.7 changes
-
-- Added a dedicated Beholder wall-aware token movement tool for GM and player clients.
-- Uses Owlbear's Interaction API for high-frequency token position updates.
-- Applies shared LINE wall geometry with `blocksMovement=true`; does not inspect Light attachment or token creator.
-- Retained the GM-side post-commit correction as a fallback for native Owlbear tools.
-- GM fallback now refreshes a complete scene snapshot after item-change events rather than trusting the event payload to be a full-scene snapshot.
-- Added a one-shot movement marker so the GM fallback accepts paths already checked by the Beholder tool, including valid paths around wall endpoints.
-- Added pure tests for no-Light CHARACTER tokens, GM/player-created tokens, MOUNT tokens, movement-wall geometry, and validated movement markers.
-- Native local WALL projections remain `blocking=false`; vision, movement, and light properties remain separate.
+- Added a local binding control for the Owlbear native Select tool.
+- Added a native Select tool-mode bridge using SDK `createMode`, `activateMode`, `onToolChange`, `onToolDown`, and `onToolUp`.
+- Normal CHARACTER / MOUNT drags use shared LINE wall geometry and the Interaction API.
+- Selected groups move as one unit; the earliest token collision constrains the group delta.
+- Non-token drags, blank-space marquee selection, and transformer gestures temporarily delegate to Owlbear's default drag mode.
+- Kept the independent wall-aware movement tool as a fallback until real-room verification.
+- Added unit tests for group movement constraints and native Select tool ID detection.
+- Wall geometry, local WALL projections, and movement / vision / light properties remain independent.
 
 ## Real Owlbear room verification — pending
 
-CI does not prove real Owlbear interaction or synchronization. Test with one GM and at least one player in the same room:
+The SDK exposes custom modes, mode activation, active-tool change events and a pass-through drag filter, but automated tests cannot prove that a custom mode can safely augment the built-in Select tool in a live room.
 
-1. Confirm the new Beholder movement tool appears in the right toolbar for both GM and player.
-2. Move a CHARACTER token with no Light attachment through a movement-blocking wall; it should stop at the wall edge during the drag.
-3. Repeat with a GM-created token and a player-created token. Neither should receive a role/creator exemption.
-4. Repeat with a MOUNT token.
-5. Verify a wall with `blocksMovement=false` does not constrain movement.
-6. Verify a wall with `blocksMovement=true` but `blocksVision=false` still blocks movement.
-7. Verify a PROP image is not treated as a character token.
-8. Move a token with Owlbear's native Select tool; the GM fallback should correct it after commit.
-9. Verify cancel / Escape / switching tools restores an in-progress movement to its original position.
-10. Test wall endpoints, corners, narrow passages, rapid dragging, scene reload, reconnect, and extension restart.
+Test with one GM and one player:
 
-The dedicated tool is real-time local movement constrained by the shared wall geometry. Native Owlbear Select movement remains a post-commit fallback and may visibly snap back. Do not mark movement accepted until the live-room tests pass.
+1. Open Beholder control panel while Owlbear's native Select tool is active. Confirm the active tool ID and bind it on each client if it was not auto-detected.
+2. Switch away from Select and back. Confirm the Beholder collision mode automatically reactivates.
+3. Click a CHARACTER Token; confirm native selection and deselection still work.
+4. Drag a CHARACTER Token with no Light through a movement-blocking wall. It should stop during drag.
+5. Repeat with GM-created, player-created and MOUNT Tokens.
+6. Select two or more Tokens and drag one. The group should move together and stop when any Token reaches a blocking wall.
+7. Drag a PROP, MAP or DRAWING object. It should retain native Owlbear movement.
+8. Drag empty space. Native marquee selection should work.
+9. Use rotation and scale handles on a selected Token. Native transformer behavior should work.
+10. Test Shift / Ctrl / Cmd selection, locked items, rapid dragging, cancel / Escape, switching tools mid-drag, scene reload, reconnect and extension restart.
+11. Confirm the separate Beholder wall-aware movement tool remains available as fallback.
+
+If the native Select bridge disrupts any normal selection or transformer interaction, unbind it from the control panel; the standalone wall-aware movement tool remains available. Do not remove the fallback or mark the bridge complete until live-room tests pass.

@@ -102,6 +102,23 @@ export interface ToolEvent {
   transformer?: boolean;
 }
 
+export interface KeyFilter {
+  key: string | string[];
+  value: unknown;
+  operator?: "==" | "!=";
+  coordinator?: "&&" | "||";
+}
+
+export interface ToolModeFilter {
+  activeTools?: string[];
+  activeModes?: string[];
+  permissions?: string[];
+  roles?: PlayerRole[];
+  metadata?: KeyFilter[];
+  target?: KeyFilter[];
+  dragging?: boolean;
+}
+
 export interface ToolActionDefinition {
   id: string;
   icons: ToolIcon[];
@@ -138,8 +155,11 @@ export interface ToolModeDefinition {
   icons: ToolIcon[];
   disabled?: { roles?: PlayerRole[] };
   cursors?: Array<{ cursor: string }>;
-  onToolClick?: (context: unknown, event: ToolEvent) => void | boolean | Promise<void | boolean>;
-  onToolDoubleClick?: (context: unknown, event: ToolEvent) => void | boolean | Promise<void | boolean>;
+  preventDrag?: ToolModeFilter;
+  onToolClick?: (context: unknown, event: ToolEvent) => boolean | void | Promise<boolean | void>;
+  onToolDoubleClick?: (context: unknown, event: ToolEvent) => boolean | void | Promise<boolean | void>;
+  onToolDown?: (context: unknown, event: ToolEvent) => void | Promise<void>;
+  onToolUp?: (context: unknown, event: ToolEvent) => void | Promise<void>;
   onToolMove?: (context: unknown, event: ToolEvent) => void | Promise<void>;
   onToolDragStart?: (context: unknown, event: ToolEvent) => void | Promise<void>;
   onToolDragMove?: (context: unknown, event: ToolEvent) => void | Promise<void>;
@@ -148,8 +168,10 @@ export interface ToolModeDefinition {
   onDeactivate?: (context: unknown) => void | Promise<void>;
 }
 
-export type ItemInteractionUpdate = (recipe: (draft: SceneItem) => void) => SceneItem;
-export type ItemInteraction = [update: ItemInteractionUpdate, stop: () => void];
+export type ItemInteractionUpdate<T extends SceneItem | SceneItem[] = SceneItem> =
+  (recipe: (draft: T) => void) => T;
+export type ItemInteraction<T extends SceneItem | SceneItem[] = SceneItem> =
+  [update: ItemInteractionUpdate<T>, stop: () => void];
 
 export interface OBRApi {
   onReady(callback: () => void): void;
@@ -157,13 +179,15 @@ export interface OBRApi {
     getRole(): Promise<PlayerRole>;
     getId(): Promise<string>;
     getSelection(): Promise<string[] | undefined>;
+    select(items: string[], replace?: boolean): Promise<void>;
+    deselect(items?: string[]): Promise<void>;
     onChange(callback: (player: unknown) => void): () => void;
   };
   notification: {
     show(message: string, variant?: "DEFAULT" | "ERROR" | "INFO" | "SUCCESS" | "WARNING"): Promise<string>;
   };
   interaction: {
-    startItemInteraction(item: SceneItem): Promise<ItemInteraction>;
+    startItemInteraction<T extends SceneItem | SceneItem[]>(items: T): Promise<ItemInteraction<T>>;
   };
   tool: {
     create(tool: ToolDefinition): Promise<void>;
@@ -174,6 +198,11 @@ export interface OBRApi {
     removeAction(id: string): Promise<void>;
     getMetadata(id: string): Promise<Record<string, unknown>>;
     setMetadata(id: string, update: Record<string, unknown>): Promise<void>;
+    getActiveTool(): Promise<string>;
+    onToolChange(callback: (id: string) => void): () => void;
+    activateMode(toolId: string, modeId: string): Promise<void>;
+    getActiveToolMode(): Promise<string | undefined>;
+    onToolModeChange(callback: (id: string) => void): () => void;
   };
   scene: {
     isReady(): Promise<boolean>;

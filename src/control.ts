@@ -1,5 +1,11 @@
 import { OBR } from "./platform/obr.js";
-import { PREFERENCES, readBooleanPreference, writeBooleanPreference } from "./core/preferences.js";
+import {
+  PREFERENCES,
+  readBooleanPreference,
+  readStringPreference,
+  writeBooleanPreference,
+  writeStringPreference,
+} from "./core/preferences.js";
 import { isWallSource, readWallSourceMetadata } from "./scene/walls/model.js";
 
 const TOOL_ID = "com.beholder-vtt/wall-editor";
@@ -20,6 +26,11 @@ const roleLabel = document.querySelector<HTMLElement>("#role-label");
 const wallCount = document.querySelector<HTMLElement>("#wall-count");
 const tokenCount = document.querySelector<HTMLElement>("#token-count");
 const playerHint = document.querySelector<HTMLElement>("#player-hint");
+const activeToolLabel = document.querySelector<HTMLElement>("#active-tool-id");
+const boundToolLabel = document.querySelector<HTMLElement>("#bound-tool-id");
+const bindToolButton = document.querySelector<HTMLButtonElement>("#bind-select-tool");
+const unbindToolButton = document.querySelector<HTMLButtonElement>("#unbind-select-tool");
+const bindStatus = document.querySelector<HTMLElement>("#select-bind-status");
 
 let clearArmedUntil = 0;
 let historyRefreshTimer: number | null = null;
@@ -36,6 +47,10 @@ function setActionStatus(message: string): void {
   if (actionStatus) actionStatus.textContent = message;
 }
 
+function setBindStatus(message: string): void {
+  if (bindStatus) bindStatus.textContent = message;
+}
+
 function updateToolbarButton(): void {
   if (!toolbarToggle) return;
   toolbarToggle.textContent = readBooleanPreference(PREFERENCES.toolbar, true)
@@ -49,11 +64,27 @@ function updateSnapButtons(): void {
   gridButton?.classList.toggle("active", grid);
 }
 
+function updateBindingLabel(): void {
+  if (boundToolLabel) {
+    boundToolLabel.textContent = readStringPreference(PREFERENCES.selectToolId, "") || "尚未绑定";
+  }
+}
+
+async function updateActiveToolLabel(): Promise<void> {
+  try {
+    const activeTool = await OBR.tool.getActiveTool();
+    if (activeToolLabel) activeToolLabel.textContent = activeTool;
+  } catch {
+    if (activeToolLabel) activeToolLabel.textContent = "无法读取";
+  }
+}
+
 function syncPreferences(): void {
   if (endpointSnap) endpointSnap.checked = readBooleanPreference(PREFERENCES.endpointSnap, true);
   if (guidesVisible) guidesVisible.checked = readBooleanPreference(PREFERENCES.guides, true);
   updateSnapButtons();
   updateToolbarButton();
+  updateBindingLabel();
 }
 
 function bindToggle(input: HTMLInputElement | null, key: string): void {
@@ -76,11 +107,32 @@ freeButton?.addEventListener("click", () => {
 gridButton?.addEventListener("click", () => {
   writeBooleanPreference(PREFERENCES.snap, true);
   updateSnapButtons();
-  setActionStatus("网格吸附已启用。按住 Ctrl / Cmd 可临时自由绘制。");
+  setActionStatus("网格吸附已启用。按住 Ctrl / Cmd 临时自由绘制。");
 });
 
 bindToggle(endpointSnap, PREFERENCES.endpointSnap);
 bindToggle(guidesVisible, PREFERENCES.guides);
+
+bindToolButton?.addEventListener("click", async () => {
+  try {
+    const activeTool = await OBR.tool.getActiveTool();
+    if (!activeTool.startsWith("rodeo.owlbear.tools/")) {
+      setBindStatus("当前工具不是 Owlbear 原生工具。请先在右侧工具栏选择原生 Select，再绑定。");
+      return;
+    }
+    writeStringPreference(PREFERENCES.selectToolId, activeTool);
+    updateBindingLabel();
+    setBindStatus("已保存绑定：" + activeTool + "。切换一次工具或重新打开场景后，Beholder 会自动接管角色 Token 的普通拖动。");
+  } catch (error) {
+    setBindStatus("读取当前工具失败：" + (error instanceof Error ? error.message : "未知错误"));
+  }
+});
+
+unbindToolButton?.addEventListener("click", () => {
+  writeStringPreference(PREFERENCES.selectToolId, "");
+  updateBindingLabel();
+  setBindStatus("已解除本客户端绑定。独立的墙体感知移动工具仍可使用。");
+});
 
 async function updateHistoryButtons(): Promise<void> {
   try {
@@ -114,7 +166,7 @@ redoButton?.addEventListener("click", async () => {
   try {
     if (await OBR.scene.history.canRedo()) {
       await OBR.scene.history.redo();
-      setActionStatus("已重做场景操作。");
+      setActionStatus("已重做上一步场景操作。");
     } else {
       setActionStatus("没有可重做的操作。");
     }
@@ -192,6 +244,14 @@ OBR.onReady(async () => {
       if (playerHint) playerHint.hidden = false;
     }
 
+    await updateActiveToolLabel();
+    OBR.tool.onToolChange((toolId) => {
+      if (activeToolLabel) activeToolLabel.textContent = toolId;
+    });
+    window.addEventListener("storage", (event) => {
+      if (event.key === PREFERENCES.selectToolId) updateBindingLabel();
+    });
+
     const ready = await OBR.scene.isReady();
     if (sceneLabel) sceneLabel.textContent = ready ? "场景已就绪" : "等待场景打开";
     if (sceneDot) sceneDot.style.background = ready ? "#6dbb92" : "#d5b574";
@@ -215,7 +275,7 @@ OBR.onReady(async () => {
   } catch (error) {
     if (sceneLabel) sceneLabel.textContent = "无法读取场景状态";
     if (sceneDot) sceneDot.style.background = "#c87878";
-    setActionStatus("控制台初始化失败：" + (error instanceof Error ? error.message : "未知错误"));
+    setBindStatus("控制台初始化失败：" + (error instanceof Error ? error.message : "未知错误"));
     console.error("Beholder control panel initialization failed.", error);
   }
 });

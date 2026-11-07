@@ -57,8 +57,8 @@ export function segmentsIntersect(a: Vector2, b: Vector2, c: Vector2, d: Vector2
 
   if (Math.abs(o1) <= EPSILON && onSegment(a, b, c)) return true;
   if (Math.abs(o2) <= EPSILON && onSegment(a, b, d)) return true;
-  if (Math.abs(o3) <= EPSILON && onSegment(c, d, a)) return true;
-  if (Math.abs(o4) <= EPSILON && onSegment(c, d, b)) return true;
+  if (Math.abs(o3) <= EPSILON && onSegment(c, a, b)) return true;
+  if (Math.abs(o4) <= EPSILON && onSegment(d, a, b)) return true;
   return false;
 }
 
@@ -72,10 +72,14 @@ export function segmentToSegmentDistance(a: Vector2, b: Vector2, c: Vector2, d: 
   );
 }
 
-
 export interface WallSegment2D {
   start: Vector2;
   end: Vector2;
+}
+
+export interface MovementFootprint {
+  center: Vector2;
+  radius: number;
 }
 
 /**
@@ -102,8 +106,6 @@ export function constrainMovement(
     const endDistance = pointToSegmentDistance(end, wall.start, wall.end);
     const crossesWall = segmentsIntersect(start, end, wall.start, wall.end);
 
-    // A token already touching a wall may move away or slide along it. It
-    // cannot move deeper into the wall or cross through it from that state.
     if (startDistance <= safeRadius + EPSILON) {
       if (crossesWall || endDistance < startDistance - EPSILON) return { ...start };
       continue;
@@ -113,8 +115,6 @@ export function constrainMovement(
       continue;
     }
 
-    // Distance from the swept path [start, point(t)] to the wall is monotonic,
-    // so binary search finds the first point at which the token touches it.
     let low = 0;
     let high = 1;
     for (let iteration = 0; iteration < 28; iteration += 1) {
@@ -131,4 +131,41 @@ export function constrainMovement(
 
   if (earliest >= 1 - EPSILON) return null;
   return { x: start.x + dx * earliest, y: start.y + dy * earliest };
+}
+
+/**
+ * Constrains a shared translation for a group of selected items. Every
+ * character/mount footprint must remain clear; non-token selected items can
+ * follow the same resulting group delta without independently blocking it.
+ */
+export function constrainGroupDelta(
+  delta: Vector2,
+  footprints: MovementFootprint[],
+  walls: WallSegment2D[],
+): Vector2 {
+  const lengthSquared = delta.x * delta.x + delta.y * delta.y;
+  if (lengthSquared <= EPSILON || footprints.length === 0 || walls.length === 0) {
+    return { ...delta };
+  }
+
+  let allowedFraction = 1;
+  for (const footprint of footprints) {
+    const desired = {
+      x: footprint.center.x + delta.x,
+      y: footprint.center.y + delta.y,
+    };
+    const safe = constrainMovement(footprint.center, desired, walls, footprint.radius);
+    if (!safe) continue;
+
+    const fraction = (
+      (safe.x - footprint.center.x) * delta.x +
+      (safe.y - footprint.center.y) * delta.y
+    ) / lengthSquared;
+    allowedFraction = Math.min(allowedFraction, Math.max(0, Math.min(1, fraction)));
+  }
+
+  return {
+    x: delta.x * allowedFraction,
+    y: delta.y * allowedFraction,
+  };
 }
