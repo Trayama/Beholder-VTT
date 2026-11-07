@@ -4,6 +4,8 @@ import { logger } from "../../core/logger.js";
 import { PREFERENCES, readStringPreference } from "../../core/preferences.js";
 import { constrainGroupDelta, type MovementFootprint, type WallSegment2D } from "./geometry.js";
 import { getMovementWallSegments } from "./collision.js";
+import { isLikelyNativeSelectTool } from "./native-select-utils.js";
+import { writeStringPreference } from "../../core/preferences.js";
 import {
   createWallAwareMoveMarker,
   isMovableToken,
@@ -77,6 +79,7 @@ export class NativeSelectIntegration {
       const activeTool = await OBR.tool.getActiveTool().catch(() => "");
       if (isLikelyNativeSelectTool(activeTool)) {
         this.boundToolId = activeTool;
+        writeStringPreference(PREFERENCES.selectToolId, activeTool);
         logger.info("Detected Owlbear native Select tool automatically.", { toolId: activeTool });
       }
     }

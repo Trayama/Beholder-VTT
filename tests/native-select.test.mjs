@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { constrainGroupDelta } from "../dist/scene/walls/geometry.js";
-import { isLikelyNativeSelectTool } from "../dist/scene/walls/native-select.js";
+import { isLikelyNativeSelectTool } from "../dist/scene/walls/native-select-utils.js";
 
 test("group movement uses the most restrictive selected token footprint", () => {
   const delta = constrainGroupDelta(
