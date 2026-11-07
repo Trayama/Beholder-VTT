@@ -35,10 +35,6 @@ function sameVector(a: Vector2, b: Vector2): boolean {
   return Math.abs(a.x - b.x) < 0.001 && Math.abs(a.y - b.y) < 0.001;
 }
 
-export function isLikelyNativeSelectTool(toolId: string): boolean {
-  return /(^|\/)select$/i.test(toolId);
-}
-
 /**
  * Bridges Beholder wall-aware movement into the currently bound Owlbear
  * native Select tool. Binding is local to each client and can be set from
