@@ -24,15 +24,23 @@ export class WallDrawTool {
   }
 
   async start(): Promise<void> {
+    // Tool registrations can outlive a background iframe reload in Owlbear.
+    // Remove our own previous registrations first so startup is idempotent.
+    try { await OBR.tool.removeMode(DRAW_MODE_ID); } catch { /* not registered yet */ }
+    try { await OBR.tool.remove(TOOL_ID); } catch { /* not registered yet */ }
+
+    // Register the toolbar tool before its mode. Do not set defaultMode here:
+    // Owlbear's documented custom-tool flow creates the tool first, then its
+    // mode; a single available mode is activated without a separate mode icon.
     await OBR.tool.create({
       id: TOOL_ID,
       icons: [{
         icon: this.iconUrl,
-        label: "Beholder VTT · 墙体绘制",
+        label: "Beholder VTT · 墙体工具",
         filter: { roles: ["GM"] },
       }],
-      defaultMode: DRAW_MODE_ID,
     });
+    logger.info("Wall toolbar tool created.", { iconUrl: this.iconUrl });
 
     await OBR.tool.createMode({
       id: DRAW_MODE_ID,
@@ -50,7 +58,8 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelDrag(),
     });
 
-    logger.info("Wall draw tool registered.");
+    logger.info("Wall draw mode registered.");
+    await OBR.notification.show("Beholder VTT：墙体工具已注册到右侧工具栏。", "SUCCESS");
   }
 
   async stop(): Promise<void> {
