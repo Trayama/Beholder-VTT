@@ -4,7 +4,17 @@ Date: 2026-11-08
 
 ## Automated validation
 
-CI validation is pending for this commit. Record the exact workflow run, test count, and Pages deployment result after the workflow completes.
+GitHub Actions run: [42400784808](https://github.com/Trayama/Beholder-VTT/actions/runs/42400784808)  
+Commit: `8e162d3b97fbe868b026f591f5bcb4443e0786ef`
+
+| Check | Result |
+|---|---|
+| TypeScript type check | PASS |
+| Production build | PASS |
+| Unit tests | PASS — 21 passed, 0 failed |
+| GitHub Pages build | PASS |
+| GitHub Pages deployment | PASS |
+| Published manifest version | 0.0.9 |
 
 ## 0.0.9 changes
 
@@ -18,7 +28,7 @@ CI validation is pending for this commit. Record the exact workflow run, test co
 - Moved wall drawing preferences, history controls, wall clearing and wall properties into a dedicated wall settings Popover.
 - Simplified the top-left panel to global settings, module status and scene status.
 - Retained the GM-authoritative MovementBlocker as a safety net.
-- Removed the unsuccessful native Select mode-binding experiment.
+- Removed the unsuccessful native Select mode-binding experiment and clean up its old tool modes during startup.
 
 ## Real Owlbear room verification — pending
 
