@@ -28,12 +28,6 @@ jobs:
         with:
           node-version-file: .nvmrc
 
-      - name: Configure GitHub Pages
-        if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
