@@ -2,16 +2,16 @@
 
 面向 Owlbear Rodeo 的模块化 TRPG 扩展。项目采用 TypeScript + Owlbear SDK，目标是在不替换 Owlbear 房间、地图和场景系统的前提下，逐步整合地图构造、角色、战斗与演出工具。
 
-**当前版本：0.0.2（开发预览）**  
+**当前版本：0.0.3（开发预览）**  
 **许可证：GPL-3.0-only**
 
 ## 安装
 
 在 Owlbear Rodeo 的扩展管理中添加以下 Manifest 地址：
 
-`https://cdn.jsdelivr.net/gh/Trayama/Beholder-VTT@gh-pages/manifest.json`
+`https://trayama.github.io/Beholder-VTT/manifest.json`
 
-扩展文件由 GitHub Actions 自动构建并发布到 `gh-pages` 分支，通过 jsDelivr CDN 提供。每次 `main` 或 `develop` 分支更新后，CI 检查通过便会自动更新发布文件。无需手动启用 GitHub Pages。
+扩展文件由 GitHub Actions 自动构建并部署到 GitHub Pages。Manifest、后台 HTML、后台 JS 和图标均由同一 GitHub Pages 站点提供；第三方 SDK 依赖仍通过 CDN 加载。当前开发预览从 `develop` 分支部署。
 
 ## 参考项目
 
