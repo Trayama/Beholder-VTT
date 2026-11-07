@@ -21,15 +21,15 @@ let isGM = false;
 let clearArmedUntil = 0;
 
 function setTab(tab: string): void {
-  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-tab]")) {
+  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>("[data-tab]"))) {
     button.classList.toggle("active", button.dataset.tab === tab);
   }
-  for (const panel of document.querySelectorAll<HTMLElement>("[data-panel]")) {
+  for (const panel of Array.from(document.querySelectorAll<HTMLElement>("[data-panel]"))) {
     panel.hidden = panel.dataset.panel !== tab;
   }
 }
 
-for (const button of document.querySelectorAll<HTMLButtonElement>("[data-tab]")) {
+for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>("[data-tab]"))) {
   button.addEventListener("click", () => setTab(button.dataset.tab ?? "map"));
 }
 
@@ -129,7 +129,7 @@ OBR.onReady(async () => {
     isGM = (await OBR.player.getRole()) === "GM";
     if (roleLabel) roleLabel.textContent = isGM ? "房主 / GM" : "玩家视图";
     if (!isGM) {
-      for (const element of document.querySelectorAll<HTMLElement>("[data-gm-only]")) element.hidden = true;
+      for (const element of Array.from(document.querySelectorAll<HTMLElement>("[data-gm-only]"))) element.hidden = true;
       if (playerHint) playerHint.hidden = false;
     }
 

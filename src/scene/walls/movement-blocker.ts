@@ -201,7 +201,7 @@ export class MovementBlocker {
       });
 
       try {
-        await OBR.scene.items.updateItems([token.id], (drafts) => {
+        await OBR.scene.items.updateItems((item) => item.id === token.id, (drafts) => {
           for (const draft of drafts) draft.position = correctedPosition;
         });
       } catch (error) {
