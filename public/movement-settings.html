@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>移动工具设置</title>
+  <title>官方 Move 设置</title>
   <style>
     :root { color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:#171b23; color:#e9edf4; --panel:#202631; --line:#343e4c; --muted:#98a4b5; }
     * { box-sizing:border-box; }
@@ -31,7 +31,16 @@
 </head>
 <body>
   <header><div class="mark">M</div><h1>官方 Move 设置</h1></header>
-  <p class="sub">角色 Token 的移动由 Beholder 实时检测墙体。其他场景对象继续使用 Owlbear 默认拖动行为。</p>
+  <p class="sub">直接扩展 Owlbear 官方 Move 工具，不再注册独立移动入口。</p>
+  <section class="section">
+    <div class="row">
+      <div class="copy">
+        <strong>官方 Move 墙体感知</strong>
+        <small>开启后，CHARACTER / MOUNT Token 拖动由 Beholder 实时检测墙体；普通对象继续使用 Owlbear 原生拖动。关闭后官方 Move 完全恢复原生移动。</small>
+      </div>
+      <input id="movement-takeover" type="checkbox" />
+    </div>
+  </section>
   <section class="section">
     <div class="row">
       <div class="copy">
@@ -45,7 +54,7 @@
   <section class="section">
     <div class="copy">
       <strong>交互兼容说明</strong>
-      <small>空白区域拖动用于框选；道具、地图和绘图的拖动交还给 Owlbear 默认交互。Token 的旋转与缩放仍可暂时关闭 Beholder 总设置中的「接管原生 Move」，使用 Owlbear 原生变换工具。</small>
+      <small>空白区域拖动使用 Beholder 框选；道具、地图和绘图沿用 Owlbear 默认拖动。旋转与缩放手柄临时交给 Owlbear 原生处理，结束后自动恢复墙体感知模式。</small>
     </div>
   </section>
   <footer><button id="close">关闭</button></footer>
