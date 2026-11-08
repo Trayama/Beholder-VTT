@@ -16,7 +16,16 @@ The standalone Beholder Select + Move toolbar tool has been removed. Beholder no
 
 ## Automated validation
 
-Pending GitHub Actions for this commit.
+GitHub Actions run: [42455341470](https://github.com/Trayama/Beholder-VTT/actions/runs/42455341470)  
+Commit: `b1874161afbfb36d0e4595658f14001de827d7bd`
+
+| Check | Result |
+|---|---|
+| TypeScript type check | PASS |
+| Production build | PASS |
+| Unit tests | PASS — 23 passed, 0 failed |
+| GitHub Pages deployment | PASS |
+| Published manifest version | 0.0.11 |
 
 ## Real Owlbear room verification — required
 
