@@ -3,7 +3,6 @@ import { PREFERENCES, readBooleanPreference, writeBooleanPreference } from "./co
 import { isWallSource, readWallSourceMetadata } from "./scene/walls/model.js";
 
 const toolbarToggle = document.querySelector<HTMLButtonElement>("#toolbar-toggle");
-const movementTakeover = document.querySelector<HTMLInputElement>("#movement-takeover");
 const actionStatus = document.querySelector<HTMLElement>("#action-status");
 const sceneLabel = document.querySelector<HTMLElement>("#scene-label");
 const sceneDot = document.querySelector<HTMLElement>("#scene-dot");
@@ -24,9 +23,6 @@ function updateToolbarButton(): void {
 }
 
 function syncPreferences(): void {
-  if (movementTakeover) {
-    movementTakeover.checked = readBooleanPreference(PREFERENCES.movementTakeover, true);
-  }
   updateToolbarButton();
 }
 
@@ -35,13 +31,6 @@ toolbarToggle?.addEventListener("click", () => {
   writeBooleanPreference(PREFERENCES.toolbar, next);
   updateToolbarButton();
   setStatus(next ? "墙体编辑工具栏已启用。" : "墙体编辑工具栏已隐藏；墙体数据与移动阻挡不受影响。");
-});
-
-movementTakeover?.addEventListener("change", () => {
-  writeBooleanPreference(PREFERENCES.movementTakeover, movementTakeover.checked);
-  setStatus(movementTakeover.checked
-    ? "原生 Move 接管已开启：官方工具入口保留，角色 Token 拖动由 Beholder 实时检测墙体。"
-    : "原生 Move 接管已关闭：官方 Move 恢复原生交互；Beholder 独立移动工具仍可使用。");
 });
 
 function updateSceneStats(items: Awaited<ReturnType<typeof OBR.scene.items.getItems>>): void {
@@ -81,7 +70,7 @@ OBR.onReady(async () => {
     });
 
     window.addEventListener("storage", (event) => {
-      if (event.key === PREFERENCES.toolbar || event.key === PREFERENCES.movementTakeover) {
+      if (event.key === PREFERENCES.toolbar) {
         syncPreferences();
       }
     });

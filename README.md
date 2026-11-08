@@ -15,7 +15,7 @@
 
 ## 0.0.10 当前功能
 
-### Beholder 选择与移动
+### 官方 Move 墙体感知移动
 
 - 独立的 Beholder Select + Move 工具作为日常选择与移动入口。
 - 开启总设置中的「接管原生 Move」后，Beholder 将墙体感知 Tool Mode 挂载到 Owlbear 官方 Move；官方工具入口和位置保持不变。
@@ -32,7 +32,7 @@
 
 左上角 Beholder 面板只负责全局设置、模块状态和场景状态：
 
-- 接管 Owlbear 原生 Move。
+- 官方 Move 的墙体感知与组移动设置。
 - 显示 / 隐藏 GM 墙体编辑工具栏。
 - 当前场景、角色身份、墙体数量和 Token 数量。
 - 模块状态概览。

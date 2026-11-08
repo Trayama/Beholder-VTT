@@ -67,7 +67,7 @@
   <header>
     <div class="mark">B</div>
     <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">GLOBAL SETTINGS</div></div>
-    <div class="version">0.0.10</div>
+    <div class="version">0.0.11</div>
   </header>
 
   <div class="statusbar">
@@ -82,13 +82,6 @@
   <main>
     <section class="card">
       <div class="card-head"><h2>全局交互</h2><span class="tag">客户端设置</span></div>
-      <div class="setting-row">
-        <div class="setting-copy">
-          <strong>Beholder 接管原生 Move</strong>
-          <small>开启后保留官方 Move 入口，由 Beholder 接管角色 Token 拖动并实时检测墙体；道具、框选、旋转和缩放交还 Owlbear。关闭后恢复原生交互。</small>
-        </div>
-        <input id="movement-takeover" type="checkbox" />
-      </div>
       <div class="setting-row" data-gm-only>
         <div class="setting-copy">
           <strong>墙体编辑工具栏</strong>
@@ -96,7 +89,7 @@
         </div>
         <button id="toolbar-toggle" class="primary">读取中…</button>
       </div>
-      <p class="hint">接管不替换或隐藏官方工具图标，而是将 Beholder 的墙体感知模式挂载到官方 Move。非角色拖动、空白框选及变换操作交还 Owlbear。</p>
+      <p class="hint">移动碰撞与组移动设置位于官方 Move 工具的独立悬浮窗；Beholder 不再注册第二套移动工具。</p>
       <div id="action-status" role="status"></div>
     </section>
 
@@ -119,7 +112,7 @@
     </section>
   </main>
 
-  <footer>Beholder VTT 0.0.10 · 模块化 TRPG 工具集</footer>
+  <footer>Beholder VTT 0.0.11 · 模块化 TRPG 工具集</footer>
   <script type="module" src="./control.js"></script>
 </body>
 </html>

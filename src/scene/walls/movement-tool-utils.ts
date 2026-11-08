@@ -1,7 +1,11 @@
-export const NATIVE_MOVE_TOOL_ID = "rodeo.owlbear.tools/move";
+export const NATIVE_MOVE_TOOL_ID = "rodeo.owlbear.tool/move";
+export const NATIVE_MOVE_TOOL_IDS = [
+  NATIVE_MOVE_TOOL_ID,
+  "rodeo.owlbear.tools/move",
+] as const;
 
 export function isNativeMoveTool(toolId: string): boolean {
-  return toolId === NATIVE_MOVE_TOOL_ID;
+  return (NATIVE_MOVE_TOOL_IDS as readonly string[]).includes(toolId);
 }
 
 export const NATIVE_MOVE_COLLISION_MODE_ID = "com.beholder-vtt/native-move-collision";
@@ -14,12 +18,6 @@ export function getNativeMoveModeId(takeoverEnabled: boolean): string {
     : NATIVE_MOVE_PASSTHROUGH_MODE_ID;
 }
 
-export function shouldDelegateNativeMove(event: {
-  target?: { layer?: string; locked?: boolean };
-  transformer?: boolean;
-}): boolean {
-  return event.transformer === true ||
-    !event.target ||
-    event.target.locked === true ||
-    (event.target.layer !== "CHARACTER" && event.target.layer !== "MOUNT");
+export function isNativeMoveTransformer(event: { transformer?: boolean }): boolean {
+  return event.transformer === true;
 }

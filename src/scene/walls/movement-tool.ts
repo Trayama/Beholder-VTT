@@ -17,15 +17,15 @@ import {
   getNativeMoveModeId,
   HIDDEN_TOOL_FILTER_ID,
   isNativeMoveTool,
+  isNativeMoveTransformer,
   NATIVE_MOVE_COLLISION_MODE_ID,
   NATIVE_MOVE_PASSTHROUGH_MODE_ID,
   NATIVE_MOVE_TOOL_ID,
-  shouldDelegateNativeMove,
+  NATIVE_MOVE_TOOL_IDS,
 } from "./movement-tool-utils.js";
 
-const TOOL_ID = "com.beholder-vtt/token-movement";
-const MOVE_MODE_ID = TOOL_ID + "/move";
-const SETTINGS_ACTION_ID = TOOL_ID + "/settings";
+const LEGACY_TOOL_ID = "com.beholder-vtt/token-movement";
+const SETTINGS_ACTION_ID = "com.beholder-vtt/native-move-settings";
 const SETTINGS_POPOVER_ID = "com.beholder-vtt/movement-settings";
 const FALLBACK_RADIUS = 18;
 const MARQUEE_BATCH_SIZE = 20;
@@ -72,13 +72,13 @@ function intersects(a: SelectionRectangle, min: Vector2, max: Vector2): boolean 
 }
 
 /**
- * Beholder's primary Select + Move tool.
+ * Extends Owlbear's built-in Move tool with Beholder's wall-aware Token movement.
  *
  * CHARACTER/MOUNT drags use real-time wall collision. Other scene-item drags
- * are explicitly handed back to Owlbear's built-in default drag behavior via
- * preventDrag. Empty-space drags perform a local marquee selection.
+ * are handed back to Owlbear's default Move behavior via preventDrag. Empty-space
+ * drags perform Beholder's marquee selection.
  */
-export class TokenMovementTool {
+export class NativeMoveIntegration {
   private registered = false;
   private session: MoveSession | null = null;
   private generation = 0;
@@ -92,63 +92,47 @@ export class TokenMovementTool {
   private nativeModesRegistered = false;
   private switchingNativeMode = false;
   private requestedNativeMode: string | null = null;
+  private nativeTransformerActive = false;
   private storageHandler: ((event: StorageEvent) => void) | null = null;
   private unsubscribeTool: (() => void) | null = null;
+  private unsubscribeMode: (() => void) | null = null;
 
   async start(): Promise<void> {
     if (this.registered) return;
     this.groupMovement = readBooleanPreference(PREFERENCES.groupMovement, true);
     this.takeoverNativeMove = readBooleanPreference(PREFERENCES.movementTakeover, true);
 
-    const icon = new URL("./icons/move-token.svg", window.location.href).toString();
     const settingsIcon = new URL("./icons/settings.svg", window.location.href).toString();
 
     try {
-      // Clean up modes left by the previous native Select integration.
-      try { await OBR.tool.removeMode("com.beholder-vtt/native-select-passthrough"); } catch { /* legacy mode absent */ }
-      try { await OBR.tool.removeMode("com.beholder-vtt/native-select-collision"); } catch { /* legacy mode absent */ }
+      const activeToolBeforeCleanup = await OBR.tool.getActiveTool().catch(() => "");
+      // Remove the old independent Beholder movement tool and its settings.
+      try { await OBR.tool.removeAction(LEGACY_TOOL_ID + "/settings"); } catch { /* absent */ }
+      try { await OBR.tool.removeMode(LEGACY_TOOL_ID + "/move"); } catch { /* absent */ }
+      try { await OBR.tool.remove(LEGACY_TOOL_ID); } catch { /* absent */ }
+      if (activeToolBeforeCleanup === LEGACY_TOOL_ID) {
+        await OBR.tool.activateTool(NATIVE_MOVE_TOOL_ID);
+      }
 
-      await OBR.tool.create({
-        id: TOOL_ID,
-        icons: [{ icon, label: "Beholder VTT · 选择与移动（墙体感知）" }],
-        defaultMode: MOVE_MODE_ID,
-      });
+      // Clean up modes left by earlier native Select experiments.
+      try { await OBR.tool.removeMode("com.beholder-vtt/native-select-passthrough"); } catch { /* absent */ }
+      try { await OBR.tool.removeMode("com.beholder-vtt/native-select-collision"); } catch { /* absent */ }
 
-      await OBR.tool.createMode({
-        id: MOVE_MODE_ID,
-        icons: [{
-          icon,
-          label: "选择与移动：角色 Token 实时碰撞，其他对象沿用 Owlbear 默认拖动",
-          filter: { activeTools: [TOOL_ID] },
-        }],
-        cursors: [{ cursor: "grab" }],
-        preventDrag: {
-          target: [
-            { key: "layer", value: "CHARACTER", operator: "!=", coordinator: "&&" },
-            { key: "layer", value: "MOUNT", operator: "!=", coordinator: "&&" },
-          ],
-        },
-        onToolClick: (_context, event) => this.handleClick(event),
-        onToolDragStart: (_context, event) => this.begin(event),
-        onToolDragMove: (_context, event) => this.move(event.pointerPosition),
-        onToolDragEnd: (_context, event) => this.end(event),
-        onToolDragCancel: () => this.cancel(),
-        onDeactivate: () => this.cancel(),
-      });
+      await this.registerNativeMoveModes();
 
       await OBR.tool.createAction({
         id: SETTINGS_ACTION_ID,
         icons: [{
           icon: settingsIcon,
-          label: "移动工具设置",
-          filter: { activeTools: [TOOL_ID] },
+          label: "墙体感知移动设置",
+          filter: { activeTools: [...NATIVE_MOVE_TOOL_IDS] },
         }],
         onClick: async (_context, elementId) => {
           await OBR.popover.open({
             id: SETTINGS_POPOVER_ID,
             url: new URL("./movement-settings.html", window.location.href).toString(),
             width: 330,
-            height: 300,
+            height: 330,
             anchorElementId: elementId,
           });
         },
@@ -158,17 +142,18 @@ export class TokenMovementTool {
       this.storageHandler = (event) => this.handleStorageChange(event);
       window.addEventListener("storage", this.storageHandler);
       this.unsubscribeTool = OBR.tool.onToolChange((toolId) => this.handleToolChange(toolId));
+      this.unsubscribeMode = OBR.tool.onToolModeChange((modeId) => this.handleToolModeChange(modeId));
 
-      await this.registerNativeMoveModes();
-      logger.info("Beholder Select + Move tool registered.", {
+      logger.info("Beholder wall-aware mode registered on Owlbear's native Move tool.", {
+        nativeMoveToolIds: [...NATIVE_MOVE_TOOL_IDS],
         groupMovement: this.groupMovement,
-        nativeMoveTakeover: this.takeoverNativeMove,
+        wallAwareMovement: this.takeoverNativeMove,
         nativeMoveModeRegistered: this.nativeModesRegistered,
       });
       await this.syncNativeMoveMode();
     } catch (error) {
       await this.removeRegistrations();
-      logger.error("Beholder Select + Move tool registration failed.", error);
+      logger.error("Beholder native Move integration failed to initialize.", error);
       throw error;
     }
   }
@@ -179,14 +164,17 @@ export class TokenMovementTool {
     this.storageHandler = null;
     this.unsubscribeTool?.();
     this.unsubscribeTool = null;
+    this.unsubscribeMode?.();
+    this.unsubscribeMode = null;
     await this.removeRegistrations();
   }
 
   private async removeRegistrations(): Promise<void> {
     await this.removeNativeMoveModes();
     try { await OBR.tool.removeAction(SETTINGS_ACTION_ID); } catch { /* not registered */ }
-    try { await OBR.tool.removeMode(MOVE_MODE_ID); } catch { /* not registered */ }
-    try { await OBR.tool.remove(TOOL_ID); } catch { /* not registered */ }
+    try { await OBR.tool.removeAction(LEGACY_TOOL_ID + "/settings"); } catch { /* absent */ }
+    try { await OBR.tool.removeMode(LEGACY_TOOL_ID + "/move"); } catch { /* absent */ }
+    try { await OBR.tool.remove(LEGACY_TOOL_ID); } catch { /* absent */ }
     this.registered = false;
   }
 
@@ -194,20 +182,25 @@ export class TokenMovementTool {
     if (this.nativeModesRegistered) return;
 
     const icon = new URL("./icons/move-token.svg", window.location.href).toString();
-    const hiddenIcon = {
+    const nativeMoveIcon = {
       icon,
-      label: "Beholder VTT · 原生 Move 墙体感知",
+      label: "Beholder · 墙体感知移动",
+      filter: { activeTools: [...NATIVE_MOVE_TOOL_IDS] },
+    };
+    const hiddenPassThroughIcon = {
+      icon,
+      label: "Beholder · 原生变换委托",
       filter: { activeTools: [HIDDEN_TOOL_FILTER_ID] },
     };
 
     try {
-      // Remove stale registrations left by an interrupted extension reload.
       try { await OBR.tool.removeMode(NATIVE_MOVE_PASSTHROUGH_MODE_ID); } catch { /* absent */ }
       try { await OBR.tool.removeMode(NATIVE_MOVE_COLLISION_MODE_ID); } catch { /* absent */ }
 
       await OBR.tool.createMode({
         id: NATIVE_MOVE_COLLISION_MODE_ID,
-        icons: [hiddenIcon],
+        icons: [nativeMoveIcon],
+        cursors: [{ cursor: "grab" }],
         preventDrag: {
           target: [
             { key: "layer", value: "CHARACTER", operator: "!=", coordinator: "&&" },
@@ -219,36 +212,48 @@ export class TokenMovementTool {
         onToolDragStart: (_context, event) => this.begin(event),
         onToolDragMove: (_context, event) => this.move(event.pointerPosition),
         onToolDragEnd: (_context, event) => this.end(event),
+        onToolUp: (_context, event) => {
+          if (event.transformer) {
+            this.nativeTransformerActive = false;
+            void this.restoreNativeMoveMode();
+          }
+        },
         onToolDragCancel: () => this.cancel(),
         onDeactivate: () => this.cancel(),
       });
 
-      // This mode leaves Owlbear's native Move interactions untouched. It is
-      // used for props/maps, empty-space marquee selection, transform handles,
-      // and whenever the user disables Beholder's native Move takeover.
       await OBR.tool.createMode({
         id: NATIVE_MOVE_PASSTHROUGH_MODE_ID,
-        icons: [{
-          ...hiddenIcon,
-          label: "Beholder VTT · 原生 Move 委托",
-        }],
+        icons: [hiddenPassThroughIcon],
         preventDrag: {},
-        onToolUp: () => { void this.restoreNativeMoveMode(); },
-        onToolDragEnd: () => { void this.restoreNativeMoveMode(); },
-        onToolDragCancel: () => { void this.restoreNativeMoveMode(); },
+        onToolUp: () => {
+          this.nativeTransformerActive = false;
+          void this.restoreNativeMoveMode();
+        },
+        onToolDragEnd: () => {
+          this.nativeTransformerActive = false;
+          void this.restoreNativeMoveMode();
+        },
+        onToolDragCancel: () => {
+          this.nativeTransformerActive = false;
+          void this.restoreNativeMoveMode();
+        },
       });
 
       this.nativeModesRegistered = true;
-      logger.info("Beholder modes registered for Owlbear's native Move tool.", {
-        nativeToolId: NATIVE_MOVE_TOOL_ID,
-        collisionModeId: NATIVE_MOVE_COLLISION_MODE_ID,
-        passthroughModeId: NATIVE_MOVE_PASSTHROUGH_MODE_ID,
+      logger.info("Wall-aware collision mode is mounted on Owlbear's native Move.", {
+        nativeMoveToolIds: [...NATIVE_MOVE_TOOL_IDS],
+        visibleModeId: NATIVE_MOVE_COLLISION_MODE_ID,
       });
     } catch (error) {
       try { await OBR.tool.removeMode(NATIVE_MOVE_PASSTHROUGH_MODE_ID); } catch { /* absent */ }
       try { await OBR.tool.removeMode(NATIVE_MOVE_COLLISION_MODE_ID); } catch { /* absent */ }
       this.nativeModesRegistered = false;
-      logger.warn("Could not attach Beholder modes to Owlbear's native Move tool; standalone movement remains available.", error);
+      logger.error("Could not register Beholder's mode on Owlbear's native Move.", error);
+      void OBR.notification.show(
+        "Beholder 无法挂载官方 Move 的墙体感知模式。请重载扩展并检查控制台。",
+        "ERROR",
+      ).catch(() => undefined);
     }
   }
 
@@ -261,7 +266,8 @@ export class TokenMovementTool {
   }
 
   private handleNativeMovePointerDown(event: ToolEvent): void {
-    if (shouldDelegateNativeMove(event)) {
+    if (isNativeMoveTransformer(event)) {
+      this.nativeTransformerActive = true;
       void this.activateNativeMoveMode(NATIVE_MOVE_PASSTHROUGH_MODE_ID);
     }
   }
@@ -289,7 +295,15 @@ export class TokenMovementTool {
 
         const activeMode = await OBR.tool.getActiveToolMode().catch(() => undefined);
         if (activeMode !== requestedMode) {
-          await OBR.tool.activateMode(NATIVE_MOVE_TOOL_ID, requestedMode);
+          await OBR.tool.activateMode(activeTool, requestedMode);
+          const confirmedMode = await OBR.tool.getActiveToolMode().catch(() => undefined);
+          if (confirmedMode !== requestedMode) {
+            logger.warn("Owlbear did not confirm the requested native Move mode.", {
+              activeTool,
+              requestedMode,
+              confirmedMode,
+            });
+          }
         }
       }
     } catch (error) {
@@ -304,6 +318,14 @@ export class TokenMovementTool {
 
   private async restoreNativeMoveMode(): Promise<void> {
     await this.syncNativeMoveMode();
+  }
+
+  private handleToolModeChange(modeId: string): void {
+    if (this.switchingNativeMode) return;
+    if (modeId === NATIVE_MOVE_COLLISION_MODE_ID && this.takeoverNativeMove) return;
+    if (modeId === NATIVE_MOVE_PASSTHROUGH_MODE_ID &&
+        (!this.takeoverNativeMove || this.nativeTransformerActive)) return;
+    void this.syncNativeMoveMode();
   }
 
   private handleStorageChange(event: StorageEvent): void {
@@ -321,10 +343,12 @@ export class TokenMovementTool {
       void this.syncNativeMoveMode();
       return;
     }
-    if (toolId !== TOOL_ID) this.cancel();
+    this.nativeTransformerActive = false;
+    this.cancel();
   }
 
   private async handleClick(event: ToolEvent): Promise<boolean> {
+    if (event.transformer) return false;
     const target = event.target;
     const additive = event.shiftKey || event.ctrlKey || event.metaKey;
 
