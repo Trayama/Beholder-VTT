@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beholder VTT 总设置</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #171b23;
+      color: #e9edf4;
+      --panel: #202631;
+      --panel-soft: #252d39;
+      --line: #343e4c;
+      --muted: #98a4b5;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; padding: 13px; min-width: 300px; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    header { display:flex; align-items:center; gap:10px; margin:1px 1px 12px; }
+    .mark { width:34px; height:34px; border-radius:10px; display:grid; place-items:center; background:linear-gradient(145deg,#b39af8,#7354ca); color:#fff; font-weight:900; box-shadow:0 5px 18px #0004; }
+    .brand { font-size:13px; font-weight:850; letter-spacing:.12em; }
+    .subtitle { color:var(--muted); font-size:9px; letter-spacing:.09em; margin-top:3px; }
+    .version { margin-left:auto; color:#8d99aa; font-size:10px; }
+    .statusbar { display:flex; align-items:center; gap:9px; border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:9px 10px; margin-bottom:10px; }
+    .dot { width:7px; height:7px; flex:0 0 auto; border-radius:50%; background:#6dbb92; box-shadow:0 0 0 3px #6dbb9222; }
+    .statuscopy { min-width:0; }
+    .statuscopy strong { display:block; font-size:11px; }
+    .statuscopy small { display:block; color:var(--muted); font-size:9px; margin-top:2px; }
+    .stats { display:flex; gap:12px; margin-left:auto; }
+    .stat { text-align:center; min-width:30px; }
+    .stat b { display:block; font-size:14px; line-height:1.1; }
+    .stat small { display:block; color:var(--muted); font-size:9px; margin-top:3px; }
+    main { max-height:430px; overflow:auto; padding:0 2px 2px 0; }
+    .card { border:1px solid var(--line); background:var(--panel); border-radius:11px; padding:11px 12px; margin-bottom:9px; }
+    .card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
+    h2 { margin:0; color:#dce3ec; font-size:11px; font-weight:800; letter-spacing:.04em; }
+    .tag { color:#82c7a1; font-size:9px; white-space:nowrap; }
+    .tag.planned { color:#a2adbc; }
+    .setting-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 1px; border-top:1px solid #303946; }
+    .setting-row:first-of-type { border-top:0; }
+    .setting-copy { min-width:0; }
+    .setting-copy strong { display:block; font-size:10px; }
+    .setting-copy small { display:block; color:var(--muted); font-size:9px; margin-top:3px; line-height:1.5; }
+    input[type=checkbox] { appearance:none; width:34px; height:19px; flex:0 0 auto; border-radius:12px; background:#4a5564; position:relative; cursor:pointer; transition:.15s; }
+    input[type=checkbox]::after { content:""; position:absolute; left:3px; top:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.15s; }
+    input[type=checkbox]:checked { background:#8c72d3; }
+    input[type=checkbox]:checked::after { transform:translateX(15px); }
+    .primary { border:1px solid #9278dc; background:#9278dc; color:#fff; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:750; white-space:nowrap; }
+    .secondary { border:1px solid var(--line); background:var(--panel-soft); color:#e0e6ee; border-radius:7px; padding:7px 10px; font-size:10px; font-weight:650; white-space:nowrap; }
+    .module-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 1px; font-size:10px; }
+    .module-row + .module-row { border-top:1px solid #303946; }
+    .module-name { font-weight:650; }
+    .hint { color:#8e9aac; font-size:9px; line-height:1.55; margin:8px 1px 0; overflow-wrap:anywhere; }
+    #active-tool-id { color:#d5b574; overflow-wrap:anywhere; }
+    #action-status { min-height:14px; color:#d5b574; font-size:9px; line-height:1.4; margin:8px 1px 0; }
+    footer { border-top:1px solid #303946; margin-top:8px; padding:9px 1px 0; color:#7f8b9b; font-size:9px; line-height:1.5; }
+  </style>
+  <script type="importmap">
+    { "imports": { "@owlbear-rodeo/sdk": "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@3.1.0/+esm" } }
+  </script>
+</head>
+<body>
+  <header>
+    <div class="mark">B</div>
+    <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">GLOBAL SETTINGS</div></div>
+    <div class="version">0.0.11</div>
+  </header>
+
+  <div class="statusbar">
+    <div class="dot" id="scene-dot"></div>
+    <div class="statuscopy"><strong id="scene-label">正在连接场景…</strong><small id="role-label">正在读取身份…</small></div>
+    <div class="stats">
+      <div class="stat"><b id="wall-count">—</b><small>墙体</small></div>
+      <div class="stat"><b id="token-count">—</b><small>棋子</small></div>
+    </div>
+  </div>
+
+  <main>
+    <section class="card">
+      <div class="card-head"><h2>全局交互</h2><span class="tag">客户端设置</span></div>
+      <div class="setting-row" data-gm-only>
+        <div class="setting-copy">
+          <strong>墙体编辑工具栏</strong>
+          <small>控制右侧墙体绘制、选择、折线、矩形和橡皮擦工具的显示。</small>
+        </div>
+        <button id="toolbar-toggle" class="primary">读取中…</button>
+      </div>
+      <p class="hint">移动碰撞与组移动设置位于官方 Move 工具的独立悬浮窗；Beholder 不再注册第二套移动工具。</p>
+      <div id="action-status" role="status"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>模块状态</h2><span class="tag">统一管理</span></div>
+      <div class="module-row"><span class="module-name">地图与墙体</span><span class="tag">已启用</span></div>
+      <div class="module-row"><span class="module-name">官方 Move 增强</span><span class="tag">已启用</span></div>
+      <div class="module-row"><span class="module-name">动态光照与迷雾</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">角色卡与战斗</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">行动资源与骰子</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">日志、音乐与演出</span><span class="tag planned">规划中</span></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>当前客户端</h2><span class="tag">运行状态</span></div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>当前活动工具</strong><small id="active-tool-id">读取中…</small></div>
+      </div>
+      <p class="hint" id="client-hint">工具设置由各模块自己的悬浮窗管理，不在总设置中展开。</p>
+    </section>
+  </main>
+
+  <footer>Beholder VTT 0.0.11 · 模块化 TRPG 工具集</footer>
+  <script type="module" src="./control.js"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>墙体工具设置</title>
+  <style>
+    :root { color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:#171b23; color:#e9edf4; --panel:#202631; --line:#343e4c; --muted:#98a4b5; }
+    * { box-sizing:border-box; }
+    [hidden] { display:none !important; }
+    body { margin:0; padding:15px; }
+    header { display:flex; align-items:center; gap:9px; margin-bottom:5px; }
+    .mark { width:30px; height:30px; border-radius:9px; display:grid; place-items:center; background:#7158b5; color:#fff; font-weight:850; }
+    h1 { font-size:13px; margin:0; }
+    .sub { color:var(--muted); font-size:10px; line-height:1.5; margin:4px 0 13px; }
+    .section { border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:10px 11px; margin-bottom:9px; }
+    .section-title { font-size:10px; color:#dce3ec; font-weight:800; margin-bottom:8px; }
+    .segmented { display:flex; gap:4px; padding:3px; background:#151a22; border:1px solid var(--line); border-radius:8px; }
+    .segmented button { flex:1; border:0; border-radius:6px; background:transparent; color:var(--muted); padding:8px; font-size:10px; font-weight:750; cursor:pointer; }
+    .segmented button.active { color:#fff; background:#6852a6; }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 1px; border-top:1px solid #303946; }
+    .copy { min-width:0; }
+    .copy strong { display:block; font-size:10px; }
+    .copy small { display:block; color:var(--muted); font-size:9px; margin-top:3px; line-height:1.45; }
+    input[type=checkbox] { appearance:none; width:34px; height:19px; flex:0 0 auto; border-radius:12px; background:#4a5564; position:relative; cursor:pointer; }
+    input[type=checkbox]::after { content:""; position:absolute; left:3px; top:3px; width:13px; height:13px; border-radius:50%; background:#fff; transition:.15s; }
+    input[type=checkbox]:checked { background:#8c72d3; }
+    input[type=checkbox]:checked::after { transform:translateX(15px); }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    button.action { border:1px solid var(--line); background:#252d39; color:#e0e6ee; border-radius:7px; padding:8px; font-size:10px; font-weight:650; cursor:pointer; }
+    button.danger { width:100%; margin-top:7px; border:1px solid #65464c; background:#32252b; color:#e6a5a7; border-radius:7px; padding:8px; font-size:10px; font-weight:750; cursor:pointer; }
+    button.armed { border-color:#d38a63; background:#463127; color:#f0c38d; }
+    button:disabled { opacity:.4; cursor:default; }
+    #status { min-height:16px; color:#d5b574; font-size:9px; line-height:1.5; margin:8px 1px 0; }
+    footer { display:flex; justify-content:flex-end; margin-top:9px; }
+    footer button { border:1px solid var(--line); background:#252d39; color:#e9edf4; border-radius:7px; padding:7px 12px; font-size:10px; cursor:pointer; }
+  </style>
+  <script type="importmap">
+    { "imports": { "@owlbear-rodeo/sdk": "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@3.1.0/+esm" } }
+  </script>
+</head>
+<body>
+  <header><div class="mark">W</div><h1>墙体工具设置与管理</h1></header>
+  <p class="sub">这里管理地图绘制与墙体数据。全局模块开关和工具栏显示状态位于 Beholder 总设置。</p>
+
+  <section class="section">
+    <div class="section-title">绘制方式</div>
+    <div class="segmented">
+      <button id="snap-free">自由绘制</button>
+      <button id="snap-grid">网格吸附</button>
+    </div>
+    <div class="row">
+      <div class="copy"><strong>端点吸附</strong><small>靠近现有墙体端点时自动连接，与网格吸附独立。</small></div>
+      <input id="endpoint-snap" type="checkbox" />
+    </div>
+    <div class="row">
+      <div class="copy"><strong>GM 墙体辅助线</strong><small>只在 GM 本地显示，不会同步给玩家。</small></div>
+      <input id="guides-visible" type="checkbox" />
+    </div>
+    <p class="sub">绘制时按住 Ctrl / Cmd 可临时关闭网格吸附。</p>
+  </section>
+
+  <section class="section">
+    <div class="section-title">墙体数据管理</div>
+    <div class="grid">
+      <button class="action" id="edit-wall">编辑选中墙体属性</button>
+      <button class="action" id="undo">撤销</button>
+      <button class="action" id="redo">重做</button>
+    </div>
+    <button class="danger" id="clear-walls">清空本场景墙体</button>
+    <div id="status" role="status">选择墙体后可编辑其移动、视野和光线阻挡属性。</div>
+  </section>
+
+  <footer><button id="close">关闭</button></footer>
+  <script type="module" src="./wall-tools-settings.js"></script>
+</body>
+</html>
