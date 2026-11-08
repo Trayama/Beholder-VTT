@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>墙体属性</title>
+  <style>
+    :root { color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:#1a2029; color:#e9edf4; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:16px; }
+    header { display:flex; align-items:center; gap:9px; margin-bottom:6px; }
+    .mark { width:27px; height:27px; border-radius:8px; display:grid; place-items:center; background:#6651a5; color:#fff; font-weight:800; }
+    h1 { font-size:14px; margin:0; }
+    .sub { color:#98a4b5; font-size:10px; margin:3px 0 14px; line-height:1.5; }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 2px; border-top:1px solid #343e4c; }
+    .copy { min-width:0; }
+    .copy strong { display:block; font-size:12px; }
+    .copy small { display:block; color:#98a4b5; font-size:9px; margin-top:4px; line-height:1.45; }
+    input { width:17px; height:17px; accent-color:#9a7be8; flex:0 0 auto; }
+    #status { min-height:22px; color:#d5b574; font-size:10px; margin:10px 0 2px; line-height:1.45; }
+    footer { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+    button { border:1px solid #465262; background:#29323e; color:#e9edf4; border-radius:7px; padding:7px 13px; cursor:pointer; font-size:11px; }
+    button.primary { background:#8e73d5; border-color:#8e73d5; color:#fff; font-weight:700; }
+    button:disabled { opacity:.4; cursor:default; }
+  </style>
+  <script type="importmap">
+    { "imports": { "@owlbear-rodeo/sdk": "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@3.1.0/+esm" } }
+  </script>
+</head>
+<body>
+  <header><div class="mark">W</div><h1>墙体属性</h1></header>
+  <p class="sub">三种阻挡分别保存，互不联动。属性应用于整条连续墙体。</p>
+  <div class="row">
+    <div class="copy"><strong>阻挡棋子移动</strong><small>由 Beholder 选择与移动工具实时阻挡；关闭原生 Move 接管时，GM 安全网会在移动后纠正穿墙。</small></div>
+    <input id="blocks-movement" type="checkbox" />
+  </div>
+  <div class="row">
+    <div class="copy"><strong>阻挡视野</strong><small>由各客户端的本地 WALL 投影提供视野遮挡，不决定棋子移动。</small></div>
+    <input id="blocks-vision" type="checkbox" />
+  </div>
+  <div class="row">
+    <div class="copy"><strong>阻挡光线</strong><small>独立保存的光照属性；后续由光照适配器读取，不借用移动碰撞。</small></div>
+    <input id="blocks-light" type="checkbox" />
+  </div>
+  <div id="status">正在读取墙体…</div>
+  <footer><button id="cancel">取消</button><button id="save" class="primary">保存属性</button></footer>
+  <script type="module" src="./wall-properties.js"></script>
+</body>
+</html>
