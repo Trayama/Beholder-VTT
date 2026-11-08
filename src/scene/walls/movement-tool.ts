@@ -159,6 +159,7 @@ export class NativeMoveIntegration {
   }
 
   async stop(): Promise<void> {
+    this.nativeTransformerActive = false;
     this.cancel();
     if (this.storageHandler) window.removeEventListener("storage", this.storageHandler);
     this.storageHandler = null;
@@ -218,7 +219,11 @@ export class NativeMoveIntegration {
             void this.restoreNativeMoveMode();
           }
         },
-        onToolDragCancel: () => this.cancel(),
+        onToolDragCancel: () => {
+          this.nativeTransformerActive = false;
+          this.cancel();
+          void this.restoreNativeMoveMode();
+        },
         onDeactivate: () => this.cancel(),
       });
 
