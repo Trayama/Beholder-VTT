@@ -1,17 +1,17 @@
-# Beholder VTT — phased delivery
+# Beholder VTT �� phased delivery
 
-## Phase 0 — Engineering foundation
+## Phase 0 �� Engineering foundation
 
 - [x] New project scaffold, independent of the archived WallBrush implementation.
 - [x] Owlbear manifest and local development server.
 - [x] Module registry, logger, and GM permission helper.
 - [x] Versioned wall-source metadata schema.
-- [x] Shared scene → local scene reconciliation base.
+- [x] Shared scene �� local scene reconciliation base.
 - [x] TypeScript build configuration and unit-test harness.
 - [ ] Real Owlbear room smoke test.
 - [ ] GM/player dual-client persistence test.
 
-## Phase 1A — Wall projection vertical slice
+## Phase 1A �� Wall projection vertical slice
 
 - [x] GM-only wall creation.
 - [x] Hidden shared LINE source.
@@ -19,7 +19,7 @@
 - [x] Update/delete/reload reconciliation base.
 - [ ] Verify update/delete/reload in a real Owlbear room.
 
-## Phase 1B — Wall editor
+## Phase 1B �� Wall editor
 
 - [x] Continuous polyline drawing.
 - [x] Rectangle tool.
@@ -29,12 +29,13 @@
 - [x] Undo/redo actions.
 - [x] Free positioning and optional grid snapping.
 - [x] Endpoint snapping while drawing and editing.
-- [x] Merge wall groups when a new path vertex snaps to one or more existing wall endpoints.
-- [ ] T-junctions at segment midpoints, crossing-wall splitting, and seam handling.
-- [ ] Junction and seam tests.
+- [x] Merge wall groups when a new path vertex snaps to an existing wall endpoint or segment.
+- [x] Merge wall groups when a newly drawn segment crosses an existing wall.
+- [ ] Split existing wall geometry into explicit nodes at T-junctions and crossings; validate resulting seams.
+- [x] Automated checks for endpoint, T-junction, crossing, and nearby parallel-wall behavior.
 - [ ] Real-room interaction and persistence acceptance.
 
-## Phase 1C — Openings and independent spatial properties
+## Phase 1C �� Openings and independent spatial properties
 
 - [x] Door and window objects, drawn directly onto an existing wall segment.
 - [x] Door state changes; opening a door removes its movement, vision, and light blocking.
@@ -45,7 +46,7 @@
 - [x] Shared spatial query interface for movement, vision, and light-blocking consumers.
 - [ ] GM/player movement-collision acceptance, including MOUNT tokens and multiple simultaneous moves.
 
-## Phase 1D — Dynamic light and fog
+## Phase 1D �� Dynamic light and fog
 
 - [x] Shared hidden light definitions and local native LIGHT projections.
 - [x] GM point-light placement tool with a default profile.
