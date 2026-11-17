@@ -1,10 +1,10 @@
 {
   "name": "beholder-vtt",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "private": true,
   "type": "module",
   "license": "GPL-3.0-only",
-  "description": "A lightweight modular TRPG extension for Owlbear Rodeo with wall-aware native Move integration.",
+  "description": "A modular TRPG toolkit for Owlbear Rodeo with shared walls, lights, fog, and wall-aware movement.",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
