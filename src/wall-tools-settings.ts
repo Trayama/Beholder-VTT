@@ -26,9 +26,9 @@ function setStatus(message: string): void {
 
 function syncPreferences(): void {
   const grid = readBooleanPreference(PREFERENCES.snap, false);
-  freeButton?.classList.toggle("active", !grid);
+  freeButton?.classList.toggle("active", !grid && !readBooleanPreference(PREFERENCES.endpointSnap, false));
   gridButton?.classList.toggle("active", grid);
-  if (endpointSnap) endpointSnap.checked = readBooleanPreference(PREFERENCES.endpointSnap, true);
+  if (endpointSnap) endpointSnap.checked = readBooleanPreference(PREFERENCES.endpointSnap, false);
   if (guidesVisible) guidesVisible.checked = readBooleanPreference(PREFERENCES.guides, true);
 }
 
@@ -48,6 +48,7 @@ async function updateHistoryButtons(): Promise<void> {
 
 freeButton?.addEventListener("click", () => {
   writeBooleanPreference(PREFERENCES.snap, false);
+  writeBooleanPreference(PREFERENCES.endpointSnap, false);
   syncPreferences();
   setStatus("自由绘制已启用。");
 });
@@ -60,6 +61,7 @@ gridButton?.addEventListener("click", () => {
 
 endpointSnap?.addEventListener("change", () => {
   writeBooleanPreference(PREFERENCES.endpointSnap, endpointSnap.checked);
+  syncPreferences();
   setStatus(endpointSnap.checked ? "端点吸附已启用。" : "端点吸附已关闭。");
 });
 
