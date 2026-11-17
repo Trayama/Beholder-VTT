@@ -1,6 +1,6 @@
 {
   "name": "Beholder VTT",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "manifest_version": 1,
   "author": "Trayama",
   "description": "A modular TRPG toolkit for Owlbear Rodeo with shared walls, lights, fog, and wall-aware movement.",
