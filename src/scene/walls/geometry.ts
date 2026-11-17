@@ -128,6 +128,29 @@ export interface WallSegment2D {
   end: Vector2;
 }
 
+export interface WallConnectionCandidate extends WallSegment2D {
+  wallId: string;
+}
+
+/** Return the existing wall groups touched by any vertex of a new wall path. */
+export function findConnectedWallGroups(
+  points: Vector2[],
+  existing: WallConnectionCandidate[],
+  tolerance: number,
+): string[] {
+  if (tolerance < 0 || points.length === 0 || existing.length === 0) return [];
+  const groups = new Set<string>();
+  for (const point of points) {
+    for (const segment of existing) {
+      if (Math.hypot(point.x - segment.start.x, point.y - segment.start.y) <= tolerance ||
+          Math.hypot(point.x - segment.end.x, point.y - segment.end.y) <= tolerance) {
+        groups.add(segment.wallId);
+      }
+    }
+  }
+  return [...groups].sort();
+}
+
 export interface MovementFootprint {
   center: Vector2;
   radius: number;
