@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   constrainMovement,
+  findConnectedWallGroups,
   inverseTransformPoint,
   pointToSegmentDistance,
   segmentToSegmentDistance,
@@ -71,6 +72,21 @@ test("segmentToSegmentDistance is zero on intersection", () => {
     { x: 0, y: 0 }, { x: 10, y: 0 },
     { x: 5, y: -5 }, { x: 5, y: 5 },
   ), 0);
+});
+
+test("new wall vertices merge every existing wall group they touch", () => {
+  const existing = [
+    { wallId: "wall-b", start: { x: 0, y: 0 }, end: { x: 10, y: 0 } },
+    { wallId: "wall-a", start: { x: 20, y: 0 }, end: { x: 30, y: 0 } },
+    { wallId: "wall-c", start: { x: 40, y: 0 }, end: { x: 50, y: 0 } },
+  ];
+  const path = [{ x: 10.2, y: 0 }, { x: 15, y: 0 }, { x: 29.9, y: 0 }];
+  assert.deepEqual(findConnectedWallGroups(path, existing, 0.5), ["wall-a", "wall-b"]);
+});
+
+test("wall connections only merge snapped vertices, not a segment midpoint", () => {
+  const existing = [{ wallId: "wall-1", start: { x: 0, y: 0 }, end: { x: 10, y: 0 } }];
+  assert.deepEqual(findConnectedWallGroups([{ x: 5, y: 0 }], existing, 0.5), []);
 });
 
 test("movement stops before a wall using the token footprint radius", () => {
