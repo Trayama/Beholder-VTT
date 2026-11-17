@@ -1,10 +1,17 @@
-# Test report - Beholder VTT 0.0.13
+# Test report - Beholder VTT 0.0.14
+
+## 0.0.14 light properties
+
+- The GM properties popover edits shared outer radius, source softness, falloff, and inner/outer cone angles.
+- Saving increments the shared light revision; each client reconciles its local native LIGHT projection.
+- Automated validation includes accepted and rejected metadata updates. Real-room synchronization remains to be checked.
 
 ## 0.0.13 implementation record
 
 - Shared LINE light definitions are projected into one local Owlbear LIGHT per connected client.
 - Reconciliation repairs missing projections, updates stale projections, removes duplicates, and cleans up deleted sources.
 - GM can place a default-radius point light from the new Lighting toolbar tool.
+- GM can edit a selected light's radius, source softness, falloff, and cone angles; updates are stored on the shared source and reconciled locally.
 - The global control panel reads and writes Owlbear scene fog fill, color, and stroke width settings.
 - Native point-light color, brightness, property editing, token attachment, and wall light-blocking integration remain incomplete.
 - Real Owlbear room verification remains required for light visibility, wall/door/window occlusion, player fog, reload, and reconnect behavior.
