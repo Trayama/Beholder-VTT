@@ -23,7 +23,7 @@ let doorOpen = false;
 
 toggleDoor?.addEventListener("click", () => {
   doorOpen = !doorOpen;
-  toggleDoor.textContent = doorOpen ? "打开" : "关闭";
+  toggleDoor.textContent = doorOpen ? "��" : "�ر�";
 });
 
 OBR.onReady(async () => {
@@ -32,30 +32,34 @@ OBR.onReady(async () => {
     const toolMetadata = await OBR.tool.getMetadata(TOOL_ID);
     const wallId = typeof toolMetadata.selectedWallId === "string" ? toolMetadata.selectedWallId : "";
     if (!wallId) {
-      message("请先在地图上选择一条墙体。");
+      message("�����ڵ�ͼ��ѡ��һ��ǽ�塣");
       if (save) save.disabled = true;
       return;
     }
     const sources = await OBR.scene.items.getItems(isWallSource);
     const group = sources.filter((item) => readWallSourceMetadata(item)?.wallId === wallId);
-    const metadata = group[0] ? readWallSourceMetadata(group[0]) : null;
+    const doorSegments = group.filter((item) => readWallSourceMetadata(item)?.kind === "door");
+    const metadata = doorSegments[0]
+      ? readWallSourceMetadata(doorSegments[0])
+      : group[0] ? readWallSourceMetadata(group[0]) : null;
     if (!metadata || group.length === 0) {
-      message("选中的墙体已不存在，请重新选择。");
+      message("ѡ�е�ǽ���Ѳ����ڣ�������ѡ��");
       if (save) save.disabled = true;
       return;
     }
     if (movement) movement.checked = metadata.blocking.blocksMovement;
     if (vision) vision.checked = metadata.blocking.blocksVision;
     if (light) light.checked = metadata.blocking.blocksLight;
-    selectedKind = metadata.kind === "door" || metadata.kind === "window" ? metadata.kind : "wall";
+    selectedKind = doorSegments.length > 0 ? "door" : metadata.kind === "window" ? "window" : "wall";
+    const targets = selectedKind === "door" ? doorSegments : group;
     doorOpen = selectedKind === "door" && metadata.open === true;
     if (doorState) doorState.hidden = selectedKind !== "door";
     for (const input of [movement, vision, light]) {
       const row = input?.closest<HTMLElement>(".row");
       if (row) row.hidden = selectedKind === "door";
     }
-    if (toggleDoor) toggleDoor.textContent = doorOpen ? "打开" : "关闭";
-    message("已选中 " + group.length + " 段墙体。修改后统一应用到整条墙体。");
+    if (toggleDoor) toggleDoor.textContent = doorOpen ? "��" : "�ر�";
+    message("��ѡ�� " + group.length + " ��ǽ�塣�޸ĺ�ͳһӦ�õ�����ǽ�塣");
 
     save?.addEventListener("click", async () => {
       save.disabled = true;
@@ -65,7 +69,7 @@ OBR.onReady(async () => {
           blocksVision: vision?.checked ?? true,
           blocksLight: light?.checked ?? true,
         };
-        const ids = new Set(group.map((item) => item.id));
+        const ids = new Set(targets.map((item) => item.id));
         await OBR.scene.items.updateItems(
           (item) => ids.has(item.id),
           (drafts) => {
@@ -81,15 +85,15 @@ OBR.onReady(async () => {
             }
           },
         );
-        message("属性已保存。");
+        message("�����ѱ��档");
         await OBR.popover.close(POPOVER_ID);
       } catch (error) {
-        message("保存失败：" + (error instanceof Error ? error.message : "未知错误"));
+        message("����ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"));
         save.disabled = false;
       }
     });
   } catch (error) {
-    message("无法读取墙体属性：" + (error instanceof Error ? error.message : "未知错误"));
+    message("�޷���ȡǽ�����ԣ�" + (error instanceof Error ? error.message : "δ֪����"));
     if (save) save.disabled = true;
   }
 });
