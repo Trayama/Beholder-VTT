@@ -1,9 +1,15 @@
 # Changelog
 
+## 0.0.14 - Light properties
+
+- Add a GM popover to edit shared light radius, source softness, falloff, and cone angles.
+- Apply validated edits through the shared light source revision so every client rebuilds its local Owlbear LIGHT.
+- Keep token attachment, custom color/brightness, independent wall-light occlusion, and live-room acceptance open.
 ## 0.0.13 - Dynamic light and scene fog groundwork
 
 - Add shared hidden light definitions and per-client local Owlbear LIGHT projections.
 - Add a GM toolbar tool that places a default-radius point light.
+- Add a properties popover for light radius, source softness, falloff, and cone angles.
 - Reconcile local lights after shared changes, reconnects, reloads, and duplicate projections.
 - Add GM controls for Owlbear scene fog fill, base color, and drawing stroke width.
 - Keep light color, brightness, editing controls, and live GM/player acceptance open.
