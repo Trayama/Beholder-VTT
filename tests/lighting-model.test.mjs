@@ -4,6 +4,7 @@ import {
   createLightMetadata,
   isLightSource,
   LIGHT_SOURCE_KEY,
+  lightAttachmentTarget,
   readLightSourceMetadata,
   updateLightSourceMetadata,
 } from "../dist/scene/lighting/model.js";
@@ -56,4 +57,9 @@ test("light property edits increment the shared revision and validate the full r
   assert.equal(readLightSourceMetadata(item)?.attenuationRadius, 420);
   assert.equal(updateLightSourceMetadata(item, { outerAngle: 45 }), false);
   assert.equal(readLightSourceMetadata(item)?.revision, 2);
+});
+
+test("local light attachment follows its token anchor when configured", () => {
+  assert.equal(lightAttachmentTarget({ id: "source-1" }), "source-1");
+  assert.equal(lightAttachmentTarget({ id: "source-1", attachedTo: "token-1" }), "token-1");
 });
