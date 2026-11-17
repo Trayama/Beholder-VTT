@@ -28,7 +28,8 @@
 - [x] Eraser and whole-wall deletion.
 - [x] Undo/redo actions.
 - [x] Free positioning and optional grid snapping.
-- [ ] Endpoint snapping and automatic connections.
+- [x] Endpoint snapping while drawing and editing.
+- [ ] Automatic wall connections, junction topology, and seam handling.
 - [ ] Junction and seam tests.
 - [ ] Real-room interaction and persistence acceptance.
 
@@ -50,7 +51,7 @@
 - [x] GM editor for radius, source softness, falloff, and cone angles.
 - [x] Local projection reconciliation after scene change, reload, and reconnect.
 - [x] GM controls for scene fog fill, base color, and drawing stroke width.
-- [ ] Attachment to character tokens.
+- [x] Attachment to CHARACTER and MOUNT tokens; local projection follows the shared source's attachment target.
 - [ ] Verify vision and light occlusion against walls, doors, and windows in Owlbear.
 - [ ] Ambient illumination and custom color/brightness rendering strategy.
 - [ ] GM/player fog and light persistence acceptance.
