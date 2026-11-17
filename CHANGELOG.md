@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.13 - Dynamic light and scene fog groundwork
+
+- Add shared hidden light definitions and per-client local Owlbear LIGHT projections.
+- Add a GM toolbar tool that places a default-radius point light.
+- Reconcile local lights after shared changes, reconnects, reloads, and duplicate projections.
+- Add GM controls for Owlbear scene fog fill, base color, and drawing stroke width.
+- Keep light color, brightness, editing controls, and live GM/player acceptance open.
+
 ## 0.0.12 — Doors, windows, and Windows build support
 
 - Add door and window drawing modes to the wall editor.
