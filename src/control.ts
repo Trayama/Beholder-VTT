@@ -59,9 +59,7 @@ function setStatus(message: string): void {
 
 function updateToolbarButton(): void {
   if (!toolbarToggle) return;
-  toolbarToggle.textContent = readBooleanPreference(PREFERENCES.toolbar, true)
-    ? "隐藏"
-    : "显示";
+  toolbarToggle.textContent = readBooleanPreference(PREFERENCES.toolbar, true) ? "隐藏" : "显示";
 }
 
 function syncPreferences(): void {
@@ -72,7 +70,7 @@ toolbarToggle?.addEventListener("click", () => {
   const next = !readBooleanPreference(PREFERENCES.toolbar, true);
   writeBooleanPreference(PREFERENCES.toolbar, next);
   updateToolbarButton();
-  setStatus(next ? "墙体编辑工具栏已启用。" : "墙体编辑工具栏已隐藏；墙体数据与移动阻挡不受影响。");
+  setStatus(next ? "墙体工具栏已显示。" : "墙体工具栏已隐藏。");
 });
 
 function updateSceneStats(items: Awaited<ReturnType<typeof OBR.scene.items.getItems>>): void {
@@ -98,13 +96,13 @@ OBR.onReady(async () => {
   try {
     const isGM = (await OBR.player.getRole()) === "GM";
     canManageDoors = isGM;
-    if (roleLabel) roleLabel.textContent = isGM ? "房主 / GM" : "玩家视图";
+    if (roleLabel) roleLabel.textContent = isGM ? "主持人 / GM" : "玩家";
     if (!isGM) {
       for (const element of Array.from(document.querySelectorAll<HTMLElement>("[data-gm-only]"))) {
         element.hidden = true;
       }
       const hint = document.querySelector<HTMLElement>("#client-hint");
-      if (hint) hint.textContent = "玩家客户端：移动接管为本地设置；墙体绘制工具由 GM 管理。";
+      if (hint) hint.textContent = "玩家可查看当前状态。";
     }
 
     if (isGM && fogFill && fogColor && fogStroke) {
@@ -119,14 +117,14 @@ OBR.onReady(async () => {
       fogSave?.addEventListener("click", async () => {
         const width = Number(fogStroke.value);
         if (!Number.isFinite(width) || width < 1 || width > 200) {
-          setStatus("Fog stroke width must be between 1 and 200.");
+          setStatus("迷雾画笔宽度须在 1 至 200 之间。");
           return;
         }
         try {
           await OBR.scene.fog.setColor(fogColor.value);
           await OBR.scene.fog.setStrokeWidth(width);
           await OBR.scene.fog.setFilled(fogFill.checked);
-          setStatus("Scene fog settings saved.");
+          setStatus("迷雾设置已保存。");
         } catch (error) {
           setStatus("Could not save scene fog: " + (error instanceof Error ? error.message : "unknown error"));
         }
@@ -145,12 +143,12 @@ OBR.onReady(async () => {
     });
 
     const ready = await OBR.scene.isReady();
-    if (sceneLabel) sceneLabel.textContent = ready ? "场景已就绪" : "等待场景打开";
+    if (sceneLabel) sceneLabel.textContent = ready ? "场景已就绪" : "等待场景";
     if (sceneDot) sceneDot.style.background = ready ? "#6dbb92" : "#d5b574";
     if (ready) { const items = await OBR.scene.items.getItems(); updateSceneStats(items); updateDoors(items); }
 
     OBR.scene.onReadyChange(async (isReady) => {
-      if (sceneLabel) sceneLabel.textContent = isReady ? "场景已就绪" : "等待场景打开";
+      if (sceneLabel) sceneLabel.textContent = isReady ? "场景已就绪" : "等待场景";
       if (sceneDot) sceneDot.style.background = isReady ? "#6dbb92" : "#d5b574";
       if (isReady) { const items = await OBR.scene.items.getItems(); updateSceneStats(items); updateDoors(items); }
     });
