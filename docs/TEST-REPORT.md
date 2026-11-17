@@ -1,4 +1,18 @@
-# Test report - Beholder VTT 0.0.14
+# Test report - Beholder VTT 0.0.15
+
+## 0.0.15 light selection and attachment
+
+- The GM can choose among all shared lights in the scene and edit the selected definition.
+- A light can attach to a CHARACTER or MOUNT item; its client-local LIGHT attaches to the same target.
+- Attachment changes are part of the light-source signature and trigger projection reconciliation.
+- Type check, production build, and 33 automated tests pass.
+- Automated tests cover attachment-target selection. Real Owlbear parent-follow behavior still needs GM/player verification.
+
+### 0.0.15 room checklist additions
+
+7. Attach a light to a CHARACTER token, move the token as GM and player, and confirm the light stays at the same offset.
+8. Attach a light to a MOUNT token, reload both clients, and confirm the light remains attached.
+9. Place multiple lights, open the properties action, select each entry, and verify edits affect only the chosen light.
 
 ## 0.0.14 light properties
 
