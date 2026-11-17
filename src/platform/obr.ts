@@ -7,7 +7,7 @@
  */
 
 // @ts-ignore -- resolved by Owlbear's browser import map at runtime.
-import OBRRuntime, { buildLine as sdkBuildLine, buildWall as sdkBuildWall } from "@owlbear-rodeo/sdk";
+import OBRRuntime, { buildLine as sdkBuildLine, buildWall as sdkBuildWall, buildLight as sdkBuildLight } from "@owlbear-rodeo/sdk";
 
 export interface Vector2 {
   x: number;
@@ -55,6 +55,16 @@ export interface WallItem extends SceneItem {
   doubleSided: boolean;
 }
 
+export interface LightItem extends SceneItem {
+  type: "LIGHT";
+  attenuationRadius: number;
+  sourceRadius: number;
+  falloff: number;
+  innerAngle: number;
+  outerAngle: number;
+  lightType: "PRIMARY" | "SECONDARY" | "AUXILIARY";
+}
+
 export interface LineBuilder {
   id(value: string): LineBuilder;
   name(value: string): LineBuilder;
@@ -90,6 +100,27 @@ export interface WallBuilder {
   disableAttachmentBehavior(value: string[]): WallBuilder;
   metadata(value: Record<string, unknown>): WallBuilder;
   build(): WallItem;
+}
+
+export interface LightBuilder {
+  id(value: string): LightBuilder;
+  name(value: string): LightBuilder;
+  position(value: Vector2): LightBuilder;
+  rotation(value: number): LightBuilder;
+  scale(value: Vector2): LightBuilder;
+  visible(value: boolean): LightBuilder;
+  layer(value: SceneLayer): LightBuilder;
+  attachedTo(value: string): LightBuilder;
+  disableAutoZIndex(value: boolean): LightBuilder;
+  zIndex(value: number): LightBuilder;
+  metadata(value: Record<string, unknown>): LightBuilder;
+  sourceRadius(value: number): LightBuilder;
+  attenuationRadius(value: number): LightBuilder;
+  falloff(value: number): LightBuilder;
+  innerAngle(value: number): LightBuilder;
+  outerAngle(value: number): LightBuilder;
+  lightType(value: "PRIMARY" | "SECONDARY" | "AUXILIARY"): LightBuilder;
+  build(): LightItem;
 }
 
 export interface ToolEvent {
@@ -225,6 +256,15 @@ export interface OBRApi {
       canUndo(): Promise<boolean>;
       canRedo(): Promise<boolean>;
     };
+    fog: {
+      getColor(): Promise<string>;
+      setColor(color: string): Promise<void>;
+      getStrokeWidth(): Promise<number>;
+      setStrokeWidth(width: number): Promise<void>;
+      getFilled(): Promise<boolean>;
+      setFilled(filled: boolean): Promise<void>;
+      onChange(callback: (fog: { filled: boolean; style: { color: string; strokeWidth: number } }) => void): () => void;
+    };
     local: {
       getItems(filter?: (item: SceneItem) => boolean): Promise<SceneItem[]>;
       addItems(items: SceneItem[]): Promise<void>;
@@ -245,3 +285,4 @@ export interface OBRApi {
 export const OBR = OBRRuntime as unknown as OBRApi;
 export const buildLine = sdkBuildLine as unknown as () => LineBuilder;
 export const buildWall = sdkBuildWall as unknown as () => WallBuilder;
+export const buildLight = sdkBuildLight as unknown as () => LightBuilder;
