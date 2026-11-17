@@ -1,6 +1,6 @@
 import { buildLight, buildLine } from "../../platform/obr.js";
 import type { LightItem, LineItem, Vector2 } from "../../platform/obr.js";
-import { createLightMetadata, LIGHT_SOURCE_KEY, LOCAL_LIGHT_KEY, readLightSourceMetadata } from "./model.js";
+import { createLightMetadata, LIGHT_SOURCE_KEY, LOCAL_LIGHT_KEY, lightAttachmentTarget, readLightSourceMetadata } from "./model.js";
 
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
@@ -31,7 +31,7 @@ export function createLocalLight(source: LineItem): LightItem | null {
     .scale(source.scale ?? UNIT)
     .layer("FOG")
     .visible(true)
-    .attachedTo(source.id)
+    .attachedTo(lightAttachmentTarget(source))
     .disableAutoZIndex(true)
     .zIndex(0)
     .sourceRadius(metadata.sourceRadius)
@@ -57,7 +57,7 @@ export function localLightMatches(source: LineItem, light: LightItem): boolean {
   if (!metadata || local?.sourceId !== source.id || local.sourceRevision !== metadata.revision) return false;
   const close = (a: number | undefined, b: number): boolean => typeof a === "number" && Math.abs(a - b) < 0.001;
   const pos = source.position ?? ZERO;
-  return light.attachedTo === source.id &&
+  return light.attachedTo === lightAttachmentTarget(source) &&
     close(light.position?.x, pos.x) && close(light.position?.y, pos.y) &&
     close(light.rotation, source.rotation ?? 0) &&
     close(light.attenuationRadius, metadata.attenuationRadius) &&
@@ -77,7 +77,7 @@ export function applySourceToLight(source: LineItem, light: LightItem): void {
   light.scale = source.scale ?? UNIT;
   light.layer = "FOG";
   light.visible = true;
-  light.attachedTo = source.id;
+  light.attachedTo = lightAttachmentTarget(source);
   light.disableAutoZIndex = true;
   light.zIndex = 0;
   light.sourceRadius = metadata.sourceRadius;
