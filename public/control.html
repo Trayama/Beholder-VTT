@@ -65,76 +65,19 @@
 </head>
 <body>
   <header>
-    <div class="mark">B</div>
+    <img class="mark" src="./icon.svg" alt="Beholder VTT" />
     <div><div class="brand">BEHOLDER VTT</div><div class="subtitle">GLOBAL SETTINGS</div></div>
     <div class="version">0.0.18</div>
   </header>
 
-  <div class="statusbar">
-    <div class="dot" id="scene-dot"></div>
-    <div class="statuscopy"><strong id="scene-label">正在连接场景…</strong><small id="role-label">正在读取身份…</small></div>
-    <div class="stats">
-      <div class="stat"><b id="wall-count">—</b><small>墙体</small></div>
-      <div class="stat"><b id="token-count">—</b><small>棋子</small></div>
-    </div>
-  </div>
-
+  <div class="statusbar"><div class="dot" id="scene-dot"></div><div class="statuscopy"><strong id="scene-label">正在连接场景</strong><small id="role-label">正在读取身份</small></div><div class="stats"><div class="stat"><b id="wall-count">—</b><small>墙组</small></div><div class="stat"><b id="token-count">—</b><small>棋子</small></div></div></div>
   <main>
-    <section class="card" data-gm-only>
-      <div class="card-head"><h2>门的开关</h2><span class="tag">仅 GM</span></div>
-      <p class="hint">先使用门工具沿已有墙体拖出门段；然后在这里点击开门或关门。</p>
-      <div id="door-list">正在读取门……</div>
-    </section>
-    <section class="card">
-      <div class="card-head"><h2>全局交互</h2><span class="tag">客户端设置</span></div>
-      <div class="setting-row" data-gm-only>
-        <div class="setting-copy">
-          <strong>墙体编辑工具栏</strong>
-          <small>控制右侧墙体绘制、选择、折线、矩形和橡皮擦工具的显示。</small>
-        </div>
-        <button id="toolbar-toggle" class="primary">读取中…</button>
-      </div>
-      <p class="hint">移动碰撞与组移动设置位于官方 Move 工具的独立悬浮窗；Beholder 不再注册第二套移动工具。</p>
-      <div id="action-status" role="status"></div>
-    </section>
-
-    <section class="card" data-gm-only>
-      <div class="card-head"><h2>Scene Fog</h2><span class="tag">Owlbear settings</span></div>
-      <div class="setting-row">
-        <div class="setting-copy"><strong>Fill the scene</strong><small>Turn on full-scene fog; turn it off to draw individual fog regions.</small></div>
-        <input id="fog-fill" type="checkbox" />
-      </div>
-      <div class="setting-row">
-        <div class="setting-copy"><strong>Fog color</strong><small>Sets the base color used by the scene fog layer.</small></div>
-        <input id="fog-color" type="color" value="#111820" />
-      </div>
-      <div class="setting-row">
-        <div class="setting-copy"><strong>Fog stroke width</strong><small>Used by Owlbear's native fog drawing tools.</small></div>
-        <input id="fog-stroke" type="number" min="1" max="200" value="20" style="width:70px" />
-      </div>
-      <button id="fog-save" class="secondary">Save fog settings</button>
-    </section>
-
-    <section class="card">
-      <div class="card-head"><h2>模块状态</h2><span class="tag">统一管理</span></div>
-      <div class="module-row"><span class="module-name">地图与墙体</span><span class="tag">已启用</span></div>
-      <div class="module-row"><span class="module-name">官方 Move 增强</span><span class="tag">已启用</span></div>
-      <div class="module-row"><span class="module-name">动态光照与迷雾</span><span class="tag planned">规划中</span></div>
-      <div class="module-row"><span class="module-name">角色卡与战斗</span><span class="tag planned">规划中</span></div>
-      <div class="module-row"><span class="module-name">行动资源与骰子</span><span class="tag planned">规划中</span></div>
-      <div class="module-row"><span class="module-name">日志、音乐与演出</span><span class="tag planned">规划中</span></div>
-    </section>
-
-    <section class="card">
-      <div class="card-head"><h2>当前客户端</h2><span class="tag">运行状态</span></div>
-      <div class="setting-row">
-        <div class="setting-copy"><strong>当前活动工具</strong><small id="active-tool-id">读取中…</small></div>
-      </div>
-      <p class="hint" id="client-hint">工具设置由各模块自己的悬浮窗管理，不在总设置中展开。</p>
-    </section>
+    <section class="card" data-gm-only><div class="card-head"><h2>门的开关</h2><span class="tag">仅 GM</span></div><p class="hint">使用门工具沿已有墙体拖出门段，然后在这里操作。</p><div id="door-list">正在读取门……</div></section>
+    <section class="card"><div class="card-head"><h2>墙体工具</h2></div><div class="setting-row" data-gm-only><div class="setting-copy"><strong>墙体编辑工具栏</strong><small>显示或隐藏墙体绘制工具。</small></div><button id="toolbar-toggle" class="primary">读取中</button></div><p class="hint">光源工具位于地图工具栏。选择后点击地图放置，再打开光源设置。</p><div id="action-status" role="status"></div></section>
+    <section class="card" data-gm-only><div class="card-head"><h2>场景迷雾</h2></div><div class="setting-row"><span>填充迷雾</span><input id="fog-fill" type="checkbox" /></div><div class="setting-row"><span>迷雾颜色</span><input id="fog-color" type="color" value="#111820" /></div><div class="setting-row"><span>画笔宽度</span><input id="fog-stroke" type="number" min="1" max="200" value="20" style="width:70px" /></div><button id="fog-save" class="secondary">保存迷雾设置</button></section>
+    <section class="card"><div class="card-head"><h2>当前工具</h2></div><div class="setting-row"><span id="active-tool-id">读取中</span></div><p class="hint" id="client-hint"></p></section>
   </main>
-
-  <footer>Beholder VTT 0.0.18 · 模块化 TRPG 工具集</footer>
+  <footer>Beholder VTT · 模块化 TRPG 工具</footer>
   <script type="module" src="./control.js"></script>
 </body>
 </html>
