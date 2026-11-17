@@ -415,13 +415,16 @@ export class WallDrawTool {
     const replacementCount = localPoints.length - 1;
     const nextCount = group.length + replacementCount - 1;
     const revision = metadata.revision + 1;
-    const openingSegmentIndex = localPoints.length === 2
-      ? 0
-      : Math.hypot(worldPoints[0]!.x - hit.start.x, worldPoints[0]!.y - hit.start.y) <= hit.tolerance * 0.25
-        ? 0
-        : Math.hypot(worldPoints[worldPoints.length - 1]!.x - hit.end.x, worldPoints[worldPoints.length - 1]!.y - hit.end.y) <= hit.tolerance * 0.25
-          ? replacementCount - 1
-          : 1;
+    const openingMidpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    let openingSegmentIndex = 0;
+    let openingDistance = Infinity;
+    for (let index = 0; index < replacementCount; index++) {
+      const distance = pointToSegmentDistance(openingMidpoint, worldPoints[index]!, worldPoints[index + 1]!);
+      if (distance < openingDistance) {
+        openingDistance = distance;
+        openingSegmentIndex = index;
+      }
+    }
     const additions: LineItem[] = [];
     const replacementMetadata: WallSourceMetadata[] = [];
 
