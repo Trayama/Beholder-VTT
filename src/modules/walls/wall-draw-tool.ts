@@ -6,7 +6,7 @@ import { PREFERENCES, readBooleanPreference, writeBooleanPreference } from "../.
 import { createWallSource, createWallSources, setDoorOpenDraft } from "../../scene/walls/source.js";
 import { defaultBlocking, isLocalWall, isWallSource, readLocalWallMetadata, readWallSourceMetadata, WALL_SOURCE_KEY } from "../../scene/walls/model.js";
 import type { WallSourceMetadata } from "../../scene/walls/model.js";
-import { inverseTransformPoint, pointToSegmentDistance, splitSegmentForOpening, transformPoint } from "../../scene/walls/geometry.js";
+import { findConnectedWallGroups, inverseTransformPoint, pointToSegmentDistance, splitSegmentForOpening, transformPoint } from "../../scene/walls/geometry.js";
 import type { WallReconciler } from "../../scene/walls/reconciler.js";
 
 const TOOL_ID = "com.beholder-vtt/wall-editor";
@@ -318,7 +318,58 @@ export class WallDrawTool {
   private async saveWall(points: Vector2[], kind: "wall" | "door" | "window" = "wall"): Promise<void> {
     const sources = createWallSources(points, kind);
     if (!sources.length) return;
-    await OBR.scene.items.addItems(sources);
+    if (kind === "wall") {
+      const existing = await this.allWallSources();
+      const candidates = existing.flatMap((source) => {
+        const metadata = readWallSourceMetadata(source);
+        if (!metadata) return [];
+        const segment = this.worldSegment(source);
+        return [{ wallId: metadata.wallId, start: segment.start, end: segment.end }];
+      });
+      const connectedIds = findConnectedWallGroups(points, candidates, 0.5);
+      if (connectedIds.length > 0) {
+        const canonicalId = connectedIds[0]!;
+        const connected = existing.filter((source) => connectedIds.includes(readWallSourceMetadata(source)?.wallId ?? ""));
+        connected.sort((a, b) => {
+          const ma = readWallSourceMetadata(a);
+          const mb = readWallSourceMetadata(b);
+          return (ma?.wallId ?? "").localeCompare(mb?.wallId ?? "") ||
+            (ma?.segmentIndex ?? 0) - (mb?.segmentIndex ?? 0) || a.id.localeCompare(b.id);
+        });
+        const total = connected.length + sources.length;
+        for (let index = 0; index < sources.length; index++) {
+          const source = sources[index]!;
+          const metadata = readWallSourceMetadata(source);
+          if (metadata) {
+            source.metadata[WALL_SOURCE_KEY] = {
+              ...metadata,
+              wallId: canonicalId,
+              segmentIndex: connected.length + index,
+              segmentCount: total,
+            };
+          }
+        }
+        await OBR.scene.items.addItems(sources);
+        await OBR.scene.items.updateItems(connected, (drafts) => {
+          for (const draft of drafts) {
+            const metadata = readWallSourceMetadata(draft);
+            if (!metadata) continue;
+            const index = connected.findIndex((item) => item.id === draft.id);
+            draft.metadata[WALL_SOURCE_KEY] = {
+              ...metadata,
+              wallId: canonicalId,
+              segmentIndex: index,
+              segmentCount: total,
+              revision: metadata.revision + 1,
+            };
+          }
+        });
+      } else {
+        await OBR.scene.items.addItems(sources);
+      }
+    } else {
+      await OBR.scene.items.addItems(sources);
+    }
     await this.reconciler.schedule("wall-created");
     const localItems = await OBR.scene.local.getItems();
     const projectedIds = new Set(localItems.filter(isLocalWall).map((item) => readLocalWallMetadata(item)?.sourceId));
