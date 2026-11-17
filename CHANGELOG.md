@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.16 - Automatic endpoint group connections
+
+- Connect newly drawn walls to every existing wall group whose endpoint is snapped within tolerance.
+- Merge touched groups under a stable wall ID and recalculate segment indexes while preserving per-segment door/window/blocking properties.
+- Keep T-junctions at segment midpoints, crossing-wall splitting, and seam acceptance open.
+
 ## 0.0.15 - Token-attached lights and light selection
 
 - Add a selector to edit any shared light in the current scene.
