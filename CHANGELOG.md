@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.18 - Wall toolbar text and door scope fix
+
+- Replace corrupted toolbar and wall-property labels with readable text and add explicit CJK font fallbacks to the wall-property popover.
+- Limit door property changes to door segments instead of applying door state across the entire connected wall group.
+- Preserve 0.0.17 junction behavior.
+
 ## 0.0.17 - Wall junction connections
 
 - Snap newly drawn wall vertices to existing segment interiors as well as endpoints.
