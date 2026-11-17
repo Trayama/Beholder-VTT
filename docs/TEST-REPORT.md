@@ -1,4 +1,11 @@
-# Test report - Beholder VTT 0.0.16
+# Test report - Beholder VTT 0.0.17
+
+## 0.0.17 wall junction connections
+
+- Drawing snaps path vertices to existing wall endpoints and segment interiors within the screen-scaled snap radius.
+- Group discovery joins T-junctions and true segment crossings, while nearby parallel walls remain separate.
+- T-junction/crossing connections merge logical wall groups; explicit segment splitting and seam behavior still require implementation and live-room acceptance.
+- Type check, production build, and automated tests pass.
 
 ## 0.0.16 wall endpoint connections
 
@@ -47,7 +54,7 @@
 5. Toggle scene fog fill and change color/stroke width; confirm player client receives the room setting.
 6. Test a point light behind a wall, closed door, open door, and window; record native visibility and shadow behavior.
 
-# Test report — Beholder VTT 0.0.12
+# Test report �� Beholder VTT 0.0.12
 
 Date: 2026-11-17
 
@@ -55,7 +62,7 @@ Date: 2026-11-17
 
 - TypeScript type check: PASS.
 - Production build: PASS on Windows after invoking the compiler through Node directly.
-- Unit tests: PASS — 28 passed, 0 failed.
+- Unit tests: PASS �� 28 passed, 0 failed.
 
 ## Added behavior
 
@@ -68,7 +75,7 @@ These are automated implementation checks. Real Owlbear GM/player room acceptanc
 
 ## 0.0.11 native Move validation record
 
-## Historical report — Beholder VTT 0.0.11
+## Historical report �� Beholder VTT 0.0.11
 
 Date: 2026-11-08
 
@@ -93,11 +100,11 @@ Commit: `b1874161afbfb36d0e4595658f14001de827d7bd`
 |---|---|
 | TypeScript type check | PASS |
 | Production build | PASS |
-| Unit tests | PASS — 23 passed, 0 failed |
+| Unit tests | PASS �� 23 passed, 0 failed |
 | GitHub Pages deployment | PASS |
 | Published manifest version | 0.0.11 |
 
-## Real Owlbear room verification — required
+## Real Owlbear room verification �� required
 
 Use one GM client and one player client in the same room.
 
