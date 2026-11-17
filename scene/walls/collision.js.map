@@ -1,0 +1,1 @@
+{"version":3,"file":"collision.js","sourceRoot":"","sources":["../../../src/scene/walls/collision.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,iBAAiB,EAAE,MAAM,oBAAoB,CAAC;AAEvD;;;GAGG;AACH,MAAM,UAAU,uBAAuB,CAAC,KAAkB;IACxD,OAAO,iBAAiB,CAAC,KAAK,EAAE,UAAU,CAAC,CAAC,GAAG,CAAC,CAAC,EAAE,KAAK,EAAE,GAAG,EAAE,EAAE,EAAE,CAAC,CAAC,EAAE,KAAK,EAAE,GAAG,EAAE,CAAC,CAAC,CAAC;AACxF,CAAC"}
