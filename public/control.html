@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beholder VTT ������</title>
+  <title>Beholder VTT 总设置</title>
   <style>
     :root {
       color-scheme: dark;
@@ -72,24 +72,29 @@
 
   <div class="statusbar">
     <div class="dot" id="scene-dot"></div>
-    <div class="statuscopy"><strong id="scene-label">�������ӳ�����</strong><small id="role-label">���ڶ�ȡ���ݡ�</small></div>
+    <div class="statuscopy"><strong id="scene-label">正在连接场景…</strong><small id="role-label">正在读取身份…</small></div>
     <div class="stats">
-      <div class="stat"><b id="wall-count">��</b><small>ǽ��</small></div>
-      <div class="stat"><b id="token-count">��</b><small>����</small></div>
+      <div class="stat"><b id="wall-count">—</b><small>墙体</small></div>
+      <div class="stat"><b id="token-count">—</b><small>棋子</small></div>
     </div>
   </div>
 
   <main>
+    <section class="card" data-gm-only>
+      <div class="card-head"><h2>门的开关</h2><span class="tag">仅 GM</span></div>
+      <p class="hint">先使用门工具沿已有墙体拖出门段；然后在这里点击开门或关门。</p>
+      <div id="door-list">正在读取门……</div>
+    </section>
     <section class="card">
-      <div class="card-head"><h2>ȫ�ֽ���</h2><span class="tag">�ͻ�������</span></div>
+      <div class="card-head"><h2>全局交互</h2><span class="tag">客户端设置</span></div>
       <div class="setting-row" data-gm-only>
         <div class="setting-copy">
-          <strong>ǽ��༭������</strong>
-          <small>�����Ҳ�ǽ����ơ�ѡ�����ߡ����κ���Ƥ�����ߵ���ʾ��</small>
+          <strong>墙体编辑工具栏</strong>
+          <small>控制右侧墙体绘制、选择、折线、矩形和橡皮擦工具的显示。</small>
         </div>
-        <button id="toolbar-toggle" class="primary">��ȡ�С�</button>
+        <button id="toolbar-toggle" class="primary">读取中…</button>
       </div>
-      <p class="hint">�ƶ���ײ�����ƶ�����λ�ڹٷ� Move ���ߵĶ�����������Beholder ����ע��ڶ����ƶ����ߡ�</p>
+      <p class="hint">移动碰撞与组移动设置位于官方 Move 工具的独立悬浮窗；Beholder 不再注册第二套移动工具。</p>
       <div id="action-status" role="status"></div>
     </section>
 
@@ -111,25 +116,25 @@
     </section>
 
     <section class="card">
-      <div class="card-head"><h2>ģ��״̬</h2><span class="tag">ͳһ����</span></div>
-      <div class="module-row"><span class="module-name">��ͼ��ǽ��</span><span class="tag">������</span></div>
-      <div class="module-row"><span class="module-name">�ٷ� Move ��ǿ</span><span class="tag">������</span></div>
-      <div class="module-row"><span class="module-name">��̬����������</span><span class="tag planned">�滮��</span></div>
-      <div class="module-row"><span class="module-name">��ɫ����ս��</span><span class="tag planned">�滮��</span></div>
-      <div class="module-row"><span class="module-name">�ж���Դ������</span><span class="tag planned">�滮��</span></div>
-      <div class="module-row"><span class="module-name">��־���������ݳ�</span><span class="tag planned">�滮��</span></div>
+      <div class="card-head"><h2>模块状态</h2><span class="tag">统一管理</span></div>
+      <div class="module-row"><span class="module-name">地图与墙体</span><span class="tag">已启用</span></div>
+      <div class="module-row"><span class="module-name">官方 Move 增强</span><span class="tag">已启用</span></div>
+      <div class="module-row"><span class="module-name">动态光照与迷雾</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">角色卡与战斗</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">行动资源与骰子</span><span class="tag planned">规划中</span></div>
+      <div class="module-row"><span class="module-name">日志、音乐与演出</span><span class="tag planned">规划中</span></div>
     </section>
 
     <section class="card">
-      <div class="card-head"><h2>��ǰ�ͻ���</h2><span class="tag">����״̬</span></div>
+      <div class="card-head"><h2>当前客户端</h2><span class="tag">运行状态</span></div>
       <div class="setting-row">
-        <div class="setting-copy"><strong>��ǰ�����</strong><small id="active-tool-id">��ȡ�С�</small></div>
+        <div class="setting-copy"><strong>当前活动工具</strong><small id="active-tool-id">读取中…</small></div>
       </div>
-      <p class="hint" id="client-hint">���������ɸ�ģ���Լ���������������������������չ����</p>
+      <p class="hint" id="client-hint">工具设置由各模块自己的悬浮窗管理，不在总设置中展开。</p>
     </section>
   </main>
 
-  <footer>Beholder VTT 0.0.18 �� ģ�黯 TRPG ���߼�</footer>
+  <footer>Beholder VTT 0.0.18 · 模块化 TRPG 工具集</footer>
   <script type="module" src="./control.js"></script>
 </body>
 </html>
