@@ -52,6 +52,10 @@ export class WallDrawTool {
   private readonly reconciler: WallReconciler;
   private dragStart: Vector2 | null = null;
   private linePreviewId: string | null = null;
+  private lineMovePending: ToolEvent | null = null;
+  private lineMoveRunning = false;
+  private lineMoveGeneration = 0;
+  private lineSnapCache: { sources: LineItem[]; scale: number } | null = null;
   private rectanglePreviewIds: string[] = [];
   private polylinePoints: Vector2[] = [];
   private polylinePreviewIds: string[] = [];
@@ -126,7 +130,7 @@ export class WallDrawTool {
     } catch (error) {
       await this.removeToolbarRegistrations();
       logger.error("Wall editor registration failed.", error);
-      await OBR.notification.show("ǽ�幤��ע��ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
+      await OBR.notification.show("墙体工具注册失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
       throw error;
     }
   }
@@ -226,7 +230,7 @@ export class WallDrawTool {
       id: SETTINGS_ACTION_ID,
       icons: [{
         icon: this.asset("icons/settings.svg"),
-        label: "ǽ�幤�����������",
+        label: "墙体工具设置与管理",
         filter,
       }],
       onClick: async (_context, elementId) => this.openSettings(elementId),
@@ -236,7 +240,7 @@ export class WallDrawTool {
       id: PROPERTIES_ACTION_ID,
       icons: [{
         icon: this.asset("icons/properties.svg"),
-        label: "�༭ѡ��ǽ������",
+        label: "编辑选中墙体属性",
         filter,
       }],
       onClick: async (_context, elementId) => this.openProperties(elementId),
@@ -254,9 +258,9 @@ export class WallDrawTool {
     }
 
     if (!allowEndpointSnap || !this.snapToEndpoints) return snapped;
-    const scale = Math.max(await OBR.viewport.getScale().catch(() => 1), 0.1);
+    const scale = this.lineSnapCache?.scale ?? Math.max(await OBR.viewport.getScale().catch(() => 1), 0.1);
     const tolerance = 14 / scale;
-    const sources = await this.allWallSources();
+    const sources = this.lineSnapCache?.sources ?? await this.allWallSources();
     let nearest: Vector2 | null = null;
     let nearestDistance = tolerance;
     for (const source of sources) {
@@ -380,7 +384,7 @@ export class WallDrawTool {
     const localItems = await OBR.scene.local.getItems();
     const projectedIds = new Set(localItems.filter(isLocalWall).map((item) => readLocalWallMetadata(item)?.sourceId));
     if (sources.some((source) => readWallSourceMetadata(source)?.blocking.blocksVision && !projectedIds.has(source.id))) {
-      throw new Error("����ǽ���ѱ��棬������һ�������赲ǽδ���ɡ�");
+      throw new Error("共享墙体已保存，但至少一个本地阻挡墙未生成。");
     }
     const first = sources[0];
     logger.info("Wall geometry saved.", { wallId: first ? readWallSourceMetadata(first)?.wallId : null, segments: sources.length });
@@ -470,6 +474,8 @@ export class WallDrawTool {
   private async startLine(event: ToolEvent, kind: "wall" | "door" | "window" = "wall"): Promise<void> {
     await this.cancelLine();
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return;
+    const [sources, scale] = await Promise.all([this.allWallSources(), OBR.viewport.getScale().catch(() => 1)]);
+    this.lineSnapCache = { sources, scale: Math.max(scale, 0.1) };
     const start = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     this.dragStart = start;
     const color = kind === "door" ? "#65c5a4" : kind === "window" ? "#5ca7db" : undefined;
@@ -480,8 +486,19 @@ export class WallDrawTool {
 
   private async moveLine(event: ToolEvent): Promise<void> {
     if (!this.dragStart || !this.linePreviewId) return;
-    const end = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
-    await this.updatePreviewLines([this.linePreviewId], [{ start: this.dragStart, end }]);
+    this.lineMovePending = event;
+    if (this.lineMoveRunning) return;
+    this.lineMoveRunning = true;
+    const generation = this.lineMoveGeneration;
+    try {
+      while (this.lineMovePending && generation === this.lineMoveGeneration) {
+        const latest = this.lineMovePending;
+        this.lineMovePending = null;
+        const end = await this.snap(latest.pointerPosition, true, latest.ctrlKey || latest.metaKey);
+        if (generation !== this.lineMoveGeneration || !this.dragStart || !this.linePreviewId) break;
+        await this.updatePreviewLines([this.linePreviewId], [{ start: this.dragStart, end }]);
+      }
+    } finally { this.lineMoveRunning = false; }
   }
 
   private async endLine(event: ToolEvent, kind: "wall" | "door" | "window" = "wall"): Promise<void> {
@@ -489,6 +506,9 @@ export class WallDrawTool {
     this.dragStart = null;
     if (!start) return;
     const end = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
+    this.lineMoveGeneration++;
+    this.lineMovePending = null;
+    this.lineSnapCache = null;
     const id = this.linePreviewId;
     this.linePreviewId = null;
     if (id) await this.removePreviews([id]);
@@ -498,11 +518,14 @@ export class WallDrawTool {
       else await this.saveOpening(start, end, kind);
     } catch (error) {
       logger.error("Line wall creation failed.", error);
-      await OBR.notification.show("ǽ�屣��ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
+      await OBR.notification.show("墙体保存失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
     }
   }
 
   private async cancelLine(): Promise<void> {
+    this.lineMoveGeneration++;
+    this.lineMovePending = null;
+    this.lineSnapCache = null;
     this.dragStart = null;
     const id = this.linePreviewId;
     this.linePreviewId = null;
@@ -540,7 +563,7 @@ export class WallDrawTool {
     }
     try { await this.saveWall(points); } catch (error) {
       logger.error("Polyline wall creation failed.", error);
-      await OBR.notification.show("���߱���ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
+      await OBR.notification.show("折线保存失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
     }
   }
 
@@ -582,7 +605,7 @@ export class WallDrawTool {
     if (Math.abs(end.x - start.x) < 4 || Math.abs(end.y - start.y) < 4) return;
     try { await this.saveWall(this.rectanglePoints(start, end)); } catch (error) {
       logger.error("Rectangle wall creation failed.", error);
-      await OBR.notification.show("����ǽ�屣��ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
+      await OBR.notification.show("矩形墙体保存失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
     }
   }
 
@@ -767,7 +790,7 @@ export class WallDrawTool {
       await this.setSelection(session.wallId);
     } catch (error) {
       logger.error("Wall edit failed.", error);
-      await OBR.notification.show("ǽ��༭ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
+      await OBR.notification.show("墙体编辑失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
     }
   }
 
@@ -820,3 +843,4 @@ export class WallDrawTool {
     this.selectionPreviewIds = [];
   }
 }
+
