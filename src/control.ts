@@ -1,6 +1,7 @@
 import { OBR } from "./platform/obr.js";
 import { PREFERENCES, readBooleanPreference, writeBooleanPreference } from "./core/preferences.js";
 import { isWallSource, readWallSourceMetadata } from "./scene/walls/model.js";
+import { setDoorOpenDraft } from "./scene/walls/source.js";
 
 const toolbarToggle = document.querySelector<HTMLButtonElement>("#toolbar-toggle");
 const actionStatus = document.querySelector<HTMLElement>("#action-status");
@@ -14,6 +15,43 @@ const fogFill = document.querySelector<HTMLInputElement>("#fog-fill");
 const fogColor = document.querySelector<HTMLInputElement>("#fog-color");
 const fogStroke = document.querySelector<HTMLInputElement>("#fog-stroke");
 const fogSave = document.querySelector<HTMLButtonElement>("#fog-save");
+const doorList = document.querySelector<HTMLElement>("#door-list");
+let canManageDoors = false;
+
+function updateDoors(items: Awaited<ReturnType<typeof OBR.scene.items.getItems>>): void {
+  if (!doorList || !canManageDoors) return;
+  const doors = items.filter((item) => isWallSource(item) && readWallSourceMetadata(item)?.kind === "door")
+    .sort((a, b) => a.id.localeCompare(b.id));
+  doorList.replaceChildren();
+  if (!doors.length) { doorList.textContent = "当前场景没有门。"; return; }
+  doors.forEach((door, index) => {
+    const metadata = readWallSourceMetadata(door);
+    if (!metadata) return;
+    const row = document.createElement("div");
+    row.className = "setting-row";
+    const label = document.createElement("span");
+    label.textContent = `门 ${index + 1} · ${metadata.open ? "已打开" : "已关闭"}`;
+    const button = document.createElement("button");
+    button.className = "secondary";
+    button.textContent = metadata.open ? "关门" : "开门";
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        await OBR.scene.items.updateItems([door], (drafts) => {
+          for (const draft of drafts) {
+            const current = readWallSourceMetadata(draft);
+            if (current?.kind === "door") setDoorOpenDraft(draft, !current.open);
+          }
+        });
+      } catch (error) {
+        setStatus("门操作失败：" + (error instanceof Error ? error.message : "未知错误"));
+        button.disabled = false;
+      }
+    });
+    row.append(label, button);
+    doorList.append(row);
+  });
+}
 
 function setStatus(message: string): void {
   if (actionStatus) actionStatus.textContent = message;
@@ -59,6 +97,7 @@ OBR.onReady(async () => {
   syncPreferences();
   try {
     const isGM = (await OBR.player.getRole()) === "GM";
+    canManageDoors = isGM;
     if (roleLabel) roleLabel.textContent = isGM ? "房主 / GM" : "玩家视图";
     if (!isGM) {
       for (const element of Array.from(document.querySelectorAll<HTMLElement>("[data-gm-only]"))) {
@@ -108,14 +147,15 @@ OBR.onReady(async () => {
     const ready = await OBR.scene.isReady();
     if (sceneLabel) sceneLabel.textContent = ready ? "场景已就绪" : "等待场景打开";
     if (sceneDot) sceneDot.style.background = ready ? "#6dbb92" : "#d5b574";
-    if (ready) updateSceneStats(await OBR.scene.items.getItems());
+    if (ready) { const items = await OBR.scene.items.getItems(); updateSceneStats(items); updateDoors(items); }
 
     OBR.scene.onReadyChange(async (isReady) => {
       if (sceneLabel) sceneLabel.textContent = isReady ? "场景已就绪" : "等待场景打开";
       if (sceneDot) sceneDot.style.background = isReady ? "#6dbb92" : "#d5b574";
-      if (isReady) updateSceneStats(await OBR.scene.items.getItems());
+      if (isReady) { const items = await OBR.scene.items.getItems(); updateSceneStats(items); updateDoors(items); }
     });
     OBR.scene.items.onChange(updateSceneStats);
+    OBR.scene.items.onChange(updateDoors);
   } catch (error) {
     if (sceneLabel) sceneLabel.textContent = "无法读取场景状态";
     if (sceneDot) sceneDot.style.background = "#c87878";
