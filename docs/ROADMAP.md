@@ -45,10 +45,13 @@
 
 ## Phase 1D — Dynamic light and fog
 
-- [ ] Native LIGHT projection.
-- [ ] Light settings and attachment.
-- [ ] Vision and light occlusion adapters.
-- [ ] Fog settings and token vision.
-- [ ] Color/brightness rendering strategy.
+- [x] Shared hidden light definitions and local native LIGHT projections.
+- [x] GM point-light placement tool with a default profile.
+- [x] Local projection reconciliation after scene change, reload, and reconnect.
+- [x] GM controls for scene fog fill, base color, and drawing stroke width.
+- [ ] Light properties editor and attachment to character tokens.
+- [ ] Verify vision and light occlusion against walls, doors, and windows in Owlbear.
+- [ ] Ambient illumination and custom color/brightness rendering strategy.
+- [ ] GM/player fog and light persistence acceptance.
 
 Every phase requires type checking, build, unit tests, runtime testing, persistence testing, and GM/player dual-client acceptance before it is marked complete. A checked implementation item is not a phase acceptance claim.
