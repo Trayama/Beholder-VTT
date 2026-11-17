@@ -1,8 +1,14 @@
+## 0.0.14 preview
+
+GM can place shared point lights, edit radius/softness/falloff/cone angles, and set Owlbear scene fog. Wall, door, and window sources remain shared; WALL and LIGHT effects are projected locally on each client.
+
+Known gaps: custom light color/brightness, token-attached lights, independent wall-to-light occlusion, and real Owlbear GM/player acceptance remain open. The complete feature checklist is in docs/ROADMAP.md.
+
 # Beholder VTT
 
 面向 Owlbear Rodeo 的轻量、模块化、规则无关 TRPG 桌面扩展。当前开发重点是地图构造与墙体感知移动。
 
-**当前版本：0.0.13（开发预览）**  
+**当前版本：0.0.14（开发预览）**  
 **许可证：GPL-3.0-only**
 
 ## 安装
