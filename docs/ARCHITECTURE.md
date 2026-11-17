@@ -51,7 +51,7 @@ This is a hard architectural constraint for the wall system. Do not replace it w
 
 ## Current implementation boundary
 
-Version 0.0.13 includes the unified control panel, wall drawing and editing, doors and windows cut into a wall segment, group-preserving opening anchors, synchronized door state, native Move Tool Mode integration, a GM-authoritative post-commit movement correction adapter, shared point-light definitions with per-client LIGHT projections, and Owlbear scene fog controls.
+Version 0.0.14 includes the unified control panel, wall drawing and editing, doors and windows cut into a wall segment, group-preserving opening anchors, synchronized door state, native Move Tool Mode integration, a GM-authoritative post-commit movement correction adapter, shared point-light definitions with per-client LIGHT projections and a shared properties editor, and Owlbear scene fog controls.
 
 The local WALL projection keeps native `blocking=false`. A closed door has all three blocking flags enabled; opening it turns all three off. A window defaults to movement blocking while vision and light pass through. Openings share the parent wall's `wallId`, so wall-group movement and node edits keep their geometry together.
 
