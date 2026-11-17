@@ -159,7 +159,7 @@ export function createLocalGuide(source: LineItem, visible = true): LineItem {
     .position(ZERO)
     .rotation(0)
     .scale(UNIT)
-    .strokeColor(metadata.kind === "door" ? "#65c5a4" : metadata.kind === "window" ? "#5ca7db" : "#d85b64")
+    .strokeColor(metadata.kind === "door" ? (metadata.open ? "#65c5a4" : "#f3b14e") : metadata.kind === "window" ? "#5ca7db" : "#d85b64")
     .strokeOpacity(0.95)
     .strokeWidth(4)
     .strokeDash([8, 5])
@@ -201,7 +201,7 @@ export function applySourceToGuideDraft(draft: SceneItem, source: LineItem, visi
     },
   };
   draft.style = {
-    strokeColor: metadata.kind === "door" ? "#65c5a4" : metadata.kind === "window" ? "#5ca7db" : "#d85b64",
+    strokeColor: metadata.kind === "door" ? (metadata.open ? "#65c5a4" : "#f3b14e") : metadata.kind === "window" ? "#5ca7db" : "#d85b64",
     strokeOpacity: 0.95,
     strokeWidth: 4,
     strokeDash: [8, 5],
