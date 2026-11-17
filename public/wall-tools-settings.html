@@ -40,37 +40,16 @@
   </script>
 </head>
 <body>
-  <header><div class="mark">W</div><h1>墙体工具设置与管理</h1></header>
-  <p class="sub">这里管理地图绘制与墙体数据。全局模块开关和工具栏显示状态位于 Beholder 总设置。</p>
-
+  <header><div class="mark">墙</div><h1>墙体工具设置</h1></header>
+  <p class="sub">选择自由绘制或开启吸附。关闭吸附时，墙线跟随鼠标实际位置。</p>
   <section class="section">
     <div class="section-title">绘制方式</div>
-    <div class="segmented">
-      <button id="snap-free">自由绘制</button>
-      <button id="snap-grid">网格吸附</button>
-    </div>
-    <div class="row">
-      <div class="copy"><strong>端点吸附</strong><small>靠近现有墙体端点时自动连接，与网格吸附独立。</small></div>
-      <input id="endpoint-snap" type="checkbox" />
-    </div>
-    <div class="row">
-      <div class="copy"><strong>GM 墙体辅助线</strong><small>只在 GM 本地显示，不会同步给玩家。</small></div>
-      <input id="guides-visible" type="checkbox" />
-    </div>
-    <p class="sub">绘制时按住 Ctrl / Cmd 可临时关闭网格吸附。</p>
+    <div class="segmented"><button id="snap-free">自由绘制（关闭吸附）</button><button id="snap-grid">吸附到网格</button></div>
+    <div class="row"><div class="copy"><strong>吸附到墙体</strong><small>开启时吸附到已有墙体的端点和线段。</small></div><input id="endpoint-snap" type="checkbox" /></div>
+    <div class="row"><div class="copy"><strong>显示 GM 墙体辅助线</strong><small>仅 GM 可见。</small></div><input id="guides-visible" type="checkbox" /></div>
+    <p class="sub">网格吸附开启时，按住 Ctrl / Cmd 可临时关闭网格吸附。</p>
   </section>
-
-  <section class="section">
-    <div class="section-title">墙体数据管理</div>
-    <div class="grid">
-      <button class="action" id="edit-wall">编辑选中墙体属性</button>
-      <button class="action" id="undo">撤销</button>
-      <button class="action" id="redo">重做</button>
-    </div>
-    <button class="danger" id="clear-walls">清空本场景墙体</button>
-    <div id="status" role="status">选择墙体后可编辑其移动、视野和光线阻挡属性。</div>
-  </section>
-
+  <section class="section"><div class="section-title">墙体管理</div><div class="grid"><button class="action" id="edit-wall">编辑墙体属性</button><button class="action" id="undo">撤销</button><button class="action" id="redo">重做</button></div><button class="danger" id="clear-walls">清空全部墙体</button><div id="status" role="status"></div></section>
   <footer><button id="close">关闭</button></footer>
   <script type="module" src="./wall-tools-settings.js"></script>
 </body>
