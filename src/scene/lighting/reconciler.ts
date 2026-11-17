@@ -42,7 +42,7 @@ export class LightReconciler {
   private signature(items: SceneItem[]): string {
     return items.filter(isLightSource).map((source) => {
       const m = source.metadata["com.beholder-vtt/light-source"] as Record<string, unknown>;
-      return [source.id, m.revision, source.position?.x, source.position?.y, source.rotation, source.scale?.x, source.scale?.y].join(":");
+      return [source.id, m.revision, source.attachedTo, source.position?.x, source.position?.y, source.rotation, source.scale?.x, source.scale?.y].join(":");
     }).sort().join("|");
   }
 
