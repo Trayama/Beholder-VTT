@@ -84,9 +84,12 @@ test("new wall vertices merge every existing wall group they touch", () => {
   assert.deepEqual(findConnectedWallGroups(path, existing, 0.5), ["wall-a", "wall-b"]);
 });
 
-test("wall connections only merge snapped vertices, not a segment midpoint", () => {
+test("wall connections join T-junctions and crossings but not nearby parallel walls", () => {
   const existing = [{ wallId: "wall-1", start: { x: 0, y: 0 }, end: { x: 10, y: 0 } }];
-  assert.deepEqual(findConnectedWallGroups([{ x: 5, y: 0 }], existing, 0.5), []);
+  assert.deepEqual(findConnectedWallGroups([{ x: 5, y: 0 }], existing, 0.5), ["wall-1"]);
+  assert.deepEqual(findConnectedWallGroups([{ x: 5, y: -5 }, { x: 5, y: 5 }], existing, 0.5), ["wall-1"]);
+  const parallel = [{ wallId: "wall-2", start: { x: 0, y: 0.4 }, end: { x: 10, y: 0.4 } }];
+  assert.deepEqual(findConnectedWallGroups([{ x: -5, y: 0 }, { x: 15, y: 0 }], parallel, 0.5), []);
 });
 
 test("movement stops before a wall using the token footprint radius", () => {
