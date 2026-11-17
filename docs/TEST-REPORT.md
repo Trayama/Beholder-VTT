@@ -1,4 +1,12 @@
-# Test report - Beholder VTT 0.0.15
+# Test report - Beholder VTT 0.0.16
+
+## 0.0.16 wall endpoint connections
+
+- A new wall path merges with each wall group whose existing segment endpoint is within 0.5 world units of a new path vertex.
+- Merged groups use the lexicographically first existing wall ID; segment ordering is rebuilt by prior group ID and segment index, then the new path order.
+- Per-segment metadata is preserved; touched existing segment revisions increment.
+- Type check, production build, and 35 automated tests pass.
+- T-junctions and crossing-wall splitting remain unimplemented; real-room topology and persistence checks remain required.
 
 ## 0.0.15 light selection and attachment
 
