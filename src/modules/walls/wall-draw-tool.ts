@@ -66,7 +66,7 @@ export class WallDrawTool {
   private toolbarVisible = false;
   private registered = false;
   private snapToGrid = false;
-  private snapToEndpoints = true;
+  private snapToEndpoints = false;
   private storageHandler: ((event: StorageEvent) => void) | null = null;
 
   constructor(reconciler: WallReconciler) {
@@ -75,7 +75,7 @@ export class WallDrawTool {
 
   async start(): Promise<void> {
     this.snapToGrid = readBooleanPreference(PREFERENCES.snap, false);
-    this.snapToEndpoints = readBooleanPreference(PREFERENCES.endpointSnap, true);
+    this.snapToEndpoints = readBooleanPreference(PREFERENCES.endpointSnap, false);
     this.reconciler.setGuidesVisible(readBooleanPreference(PREFERENCES.guides, true));
     this.storageHandler = (event) => this.handleStorageChange(event);
     window.addEventListener("storage", this.storageHandler);
@@ -101,7 +101,7 @@ export class WallDrawTool {
     } else if (event.key === PREFERENCES.snap) {
       this.snapToGrid = event.newValue === "true";
     } else if (event.key === PREFERENCES.endpointSnap) {
-      this.snapToEndpoints = event.newValue !== "false";
+      this.snapToEndpoints = event.newValue === "true";
     } else if (event.key === PREFERENCES.guides) {
       this.reconciler.setGuidesVisible(event.newValue !== "false");
     }
@@ -474,8 +474,10 @@ export class WallDrawTool {
   private async startLine(event: ToolEvent, kind: "wall" | "door" | "window" = "wall"): Promise<void> {
     await this.cancelLine();
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return;
-    const [sources, scale] = await Promise.all([this.allWallSources(), OBR.viewport.getScale().catch(() => 1)]);
-    this.lineSnapCache = { sources, scale: Math.max(scale, 0.1) };
+    if (this.snapToEndpoints) {
+      const [sources, scale] = await Promise.all([this.allWallSources(), OBR.viewport.getScale().catch(() => 1)]);
+      this.lineSnapCache = { sources, scale: Math.max(scale, 0.1) };
+    }
     const start = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     this.dragStart = start;
     const color = kind === "door" ? "#65c5a4" : kind === "window" ? "#5ca7db" : undefined;
@@ -843,4 +845,3 @@ export class WallDrawTool {
     this.selectionPreviewIds = [];
   }
 }
-
