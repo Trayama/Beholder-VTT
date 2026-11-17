@@ -51,9 +51,11 @@ This is a hard architectural constraint for the wall system. Do not replace it w
 
 ## Current implementation boundary
 
-Version 0.0.6 includes the unified control panel, free/grid drawing preference, temporary Ctrl/Cmd grid bypass, endpoint snapping, wall selection and editing, property editing, undo/redo, clear, and a GM-authoritative post-commit movement correction adapter.
+Version 0.0.12 includes the unified control panel, wall drawing and editing, doors and windows cut into a wall segment, group-preserving opening anchors, synchronized door state, native Move Tool Mode integration, and a GM-authoritative post-commit movement correction adapter.
 
-The local WALL projection keeps native `blocking=false`. The GM movement adapter uses only shared LINE source geometry and the `blocksMovement` flag. The light-blocking property is stored independently but is not yet connected to a light adapter.
+The local WALL projection keeps native `blocking=false`. A closed door has all three blocking flags enabled; opening it turns all three off. A window defaults to movement blocking while vision and light pass through. Openings share the parent wall's `wallId`, so wall-group movement and node edits keep their geometry together.
+
+The GM movement adapter uses shared LINE source geometry and the `blocksMovement` flag. Light blocking remains independent metadata; it is not yet connected to a light adapter. Dynamic lighting and fog are not implemented.
 
 ## Performance boundary
 

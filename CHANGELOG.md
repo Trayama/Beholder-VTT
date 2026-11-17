@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.12 — Doors, windows, and Windows build support
+
+- Add door and window drawing modes to the wall editor.
+- Split a wall segment when placing an opening so the wall no longer blocks through the opening.
+- Keep opening segments in the parent wall group so selection, movement, and endpoint edits keep them aligned.
+- Let the GM click a door to open or close it; open doors allow movement, vision, and light through.
+- Give windows independent defaults: block movement, allow vision, and allow light.
+- Add a shared spatial query API so movement, vision, and light adapters read the same source geometry with independent flags.
+- Fix the production build on Windows by invoking the TypeScript compiler through Node.
+- Keep real Owlbear GM/player room acceptance pending.
+
 ## 0.0.6 — Control panel and movement correction
 
 - Replace the tabbed control panel with a single functional dashboard.

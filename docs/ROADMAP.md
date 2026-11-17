@@ -34,13 +34,13 @@
 
 ## Phase 1C — Openings and independent spatial properties
 
-- [ ] Door and window objects.
-- [ ] Door state changes.
-- [ ] Wall-relative opening anchors.
+- [x] Door and window objects, drawn directly onto an existing wall segment.
+- [x] Door state changes; opening a door removes its movement, vision, and light blocking.
+- [x] Wall-relative opening anchors; openings remain in the wall group and follow group edits.
 - [x] Independent movement, vision, and light blocking metadata.
 - [x] GM-authoritative post-commit movement correction.
 - [ ] Independent light-blocking adapter.
-- [ ] Shared spatial query interface.
+- [x] Shared spatial query interface for movement, vision, and light-blocking consumers.
 - [ ] GM/player movement-collision acceptance, including MOUNT tokens and multiple simultaneous moves.
 
 ## Phase 1D — Dynamic light and fog

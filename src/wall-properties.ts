@@ -1,6 +1,7 @@
 import { OBR } from "./platform/obr.js";
 import { isWallSource, readWallSourceMetadata, WALL_SOURCE_KEY } from "./scene/walls/model.js";
-import type { WallSourceMetadata } from "./scene/walls/model.js";
+import { defaultBlocking } from "./scene/walls/model.js";
+import type { BarrierKind, WallSourceMetadata } from "./scene/walls/model.js";
 
 const TOOL_ID = "com.beholder-vtt/wall-editor";
 const POPOVER_ID = "com.beholder-vtt/wall-properties";
@@ -8,12 +9,22 @@ const status = document.querySelector<HTMLElement>("#status");
 const movement = document.querySelector<HTMLInputElement>("#blocks-movement");
 const vision = document.querySelector<HTMLInputElement>("#blocks-vision");
 const light = document.querySelector<HTMLInputElement>("#blocks-light");
+const doorState = document.querySelector<HTMLElement>("#door-state");
+const toggleDoor = document.querySelector<HTMLButtonElement>("#toggle-door");
 const save = document.querySelector<HTMLButtonElement>("#save");
 const cancel = document.querySelector<HTMLButtonElement>("#cancel");
 
 function message(value: string): void {
   if (status) status.textContent = value;
 }
+
+let selectedKind: BarrierKind = "wall";
+let doorOpen = false;
+
+toggleDoor?.addEventListener("click", () => {
+  doorOpen = !doorOpen;
+  toggleDoor.textContent = doorOpen ? "打开" : "关闭";
+});
 
 OBR.onReady(async () => {
   cancel?.addEventListener("click", () => void OBR.popover.close(POPOVER_ID));
@@ -36,12 +47,20 @@ OBR.onReady(async () => {
     if (movement) movement.checked = metadata.blocking.blocksMovement;
     if (vision) vision.checked = metadata.blocking.blocksVision;
     if (light) light.checked = metadata.blocking.blocksLight;
+    selectedKind = metadata.kind === "door" || metadata.kind === "window" ? metadata.kind : "wall";
+    doorOpen = selectedKind === "door" && metadata.open === true;
+    if (doorState) doorState.hidden = selectedKind !== "door";
+    for (const input of [movement, vision, light]) {
+      const row = input?.closest<HTMLElement>(".row");
+      if (row) row.hidden = selectedKind === "door";
+    }
+    if (toggleDoor) toggleDoor.textContent = doorOpen ? "打开" : "关闭";
     message("已选中 " + group.length + " 段墙体。修改后统一应用到整条墙体。");
 
     save?.addEventListener("click", async () => {
       save.disabled = true;
       try {
-        const blocking = {
+        const blocking = selectedKind === "door" ? defaultBlocking("door", doorOpen) : {
           blocksMovement: movement?.checked ?? true,
           blocksVision: vision?.checked ?? true,
           blocksLight: light?.checked ?? true,
@@ -53,7 +72,12 @@ OBR.onReady(async () => {
             for (const draft of drafts) {
               const raw = draft.metadata[WALL_SOURCE_KEY] as WallSourceMetadata | undefined;
               if (!raw) continue;
-              draft.metadata[WALL_SOURCE_KEY] = { ...raw, revision: raw.revision + 1, blocking };
+              draft.metadata[WALL_SOURCE_KEY] = {
+                ...raw,
+                revision: raw.revision + 1,
+                blocking,
+                ...(selectedKind === "door" ? { open: doorOpen } : {}),
+              };
             }
           },
         );

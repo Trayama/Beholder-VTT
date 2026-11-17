@@ -8,7 +8,13 @@ const dist = resolve(root, "dist");
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
 
-execFileSync("tsc", ["-p", "tsconfig.json"], { cwd: root, stdio: "inherit" });
+// Invoke TypeScript through Node so the build works on Windows as well as
+// POSIX shells. Spawning the bare "tsc" command does not resolve the .cmd
+// shim when shell execution is disabled.
+execFileSync(process.execPath, [resolve(root, "node_modules/typescript/bin/tsc"), "-p", "tsconfig.json"], {
+  cwd: root,
+  stdio: "inherit",
+});
 cpSync(resolve(root, "public"), dist, { recursive: true });
 
 // Local development overrides the production Pages URLs without changing the

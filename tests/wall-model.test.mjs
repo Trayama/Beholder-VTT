@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createDefaultWallMetadata,
+  defaultBlocking,
   hasWallAwareMoveMarker,
   isLocalWall,
   isMovableToken,
@@ -34,6 +35,31 @@ test("default wall metadata keeps movement, vision and light flags independent",
   metadata.blocking.blocksVision = false;
   assert.equal(metadata.blocking.blocksMovement, true);
   assert.equal(metadata.blocking.blocksLight, true);
+});
+
+test("doors toggle all three barriers while windows stay walk-blocking and sight-transparent", () => {
+  assert.deepEqual(defaultBlocking("door", false), {
+    blocksMovement: true,
+    blocksVision: true,
+    blocksLight: true,
+  });
+  assert.deepEqual(defaultBlocking("door", true), {
+    blocksMovement: false,
+    blocksVision: false,
+    blocksLight: false,
+  });
+  assert.deepEqual(defaultBlocking("window"), {
+    blocksMovement: true,
+    blocksVision: false,
+    blocksLight: false,
+  });
+});
+
+test("door sources carry a synchronized closed state", () => {
+  const metadata = createDefaultWallMetadata("door-1", "door");
+  assert.equal(metadata.kind, "door");
+  assert.equal(metadata.open, false);
+  assert.deepEqual(metadata.blocking, defaultBlocking("door", false));
 });
 
 test("wall source validation accepts a well-formed hidden LINE", () => {

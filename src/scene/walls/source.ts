@@ -3,6 +3,8 @@ import type { LineItem, SceneItem, Vector2, WallItem } from "../../platform/obr.
 import { transformPoint } from "./geometry.js";
 import {
   createDefaultWallMetadata,
+  defaultBlocking,
+  type BarrierKind,
   LOCAL_GUIDE_KEY,
   LOCAL_WALL_KEY,
   readWallSourceMetadata,
@@ -12,7 +14,7 @@ import {
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
 
-export function createWallSources(points: Vector2[]): LineItem[] {
+export function createWallSources(points: Vector2[], kind: BarrierKind = "wall"): LineItem[] {
   if (points.length < 2) return [];
   const wallId = crypto.randomUUID();
   const segmentCount = points.length - 1;
@@ -21,7 +23,7 @@ export function createWallSources(points: Vector2[]): LineItem[] {
     if (!end) throw new Error("A wall segment is missing its endpoint.");
     const id = crypto.randomUUID();
     const metadata = {
-      ...createDefaultWallMetadata(wallId),
+      ...createDefaultWallMetadata(wallId, kind),
       segmentIndex,
       segmentCount,
     };
@@ -46,6 +48,20 @@ export function createWallSource(start: Vector2, end: Vector2): LineItem {
   const source = createWallSources([start, end])[0];
   if (!source) throw new Error("Could not create wall source.");
   return source;
+}
+
+export function setDoorOpenDraft(draft: SceneItem, open: boolean): void {
+  const metadata = readWallSourceMetadata(draft);
+  if (!metadata || metadata.kind !== "door") return;
+  draft.metadata = {
+    ...draft.metadata,
+    [WALL_SOURCE_KEY]: {
+      ...metadata,
+      revision: metadata.revision + 1,
+      open,
+      blocking: defaultBlocking("door", open),
+    },
+  };
 }
 
 export function createLocalWall(source: LineItem): WallItem {
@@ -143,7 +159,7 @@ export function createLocalGuide(source: LineItem, visible = true): LineItem {
     .position(ZERO)
     .rotation(0)
     .scale(UNIT)
-    .strokeColor("#d85b64")
+    .strokeColor(metadata.kind === "door" ? "#65c5a4" : metadata.kind === "window" ? "#5ca7db" : "#d85b64")
     .strokeOpacity(0.95)
     .strokeWidth(4)
     .strokeDash([8, 5])
@@ -185,7 +201,7 @@ export function applySourceToGuideDraft(draft: SceneItem, source: LineItem, visi
     },
   };
   draft.style = {
-    strokeColor: "#d85b64",
+    strokeColor: metadata.kind === "door" ? "#65c5a4" : metadata.kind === "window" ? "#5ca7db" : "#d85b64",
     strokeOpacity: 0.95,
     strokeWidth: 4,
     strokeDash: [8, 5],

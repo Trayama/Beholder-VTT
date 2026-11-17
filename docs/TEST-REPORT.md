@@ -1,4 +1,25 @@
-# Test report — Beholder VTT 0.0.11
+# Test report — Beholder VTT 0.0.12
+
+Date: 2026-11-17
+
+## Local automated validation
+
+- TypeScript type check: PASS.
+- Production build: PASS on Windows after invoking the compiler through Node directly.
+- Unit tests: PASS — 28 passed, 0 failed.
+
+## Added behavior
+
+- Door and window placement splits an existing wall source while preserving its wall group.
+- Door state updates the shared source and rebuilds local vision projections.
+- Open doors allow movement, vision, and light through. Windows allow vision and light through while blocking movement.
+- The shared spatial query API returns geometry independently for movement, vision, and light-blocking consumers.
+
+These are automated implementation checks. Real Owlbear GM/player room acceptance is still pending; use the native Move and persistence checklist below before treating the integration as accepted.
+
+## 0.0.11 native Move validation record
+
+## Historical report — Beholder VTT 0.0.11
 
 Date: 2026-11-08
 

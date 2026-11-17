@@ -12,12 +12,16 @@ export interface WallBlocking {
   blocksLight: boolean;
 }
 
+export type BarrierKind = "wall" | "door" | "window";
+
 export interface WallSourceMetadata {
   schemaVersion: typeof WALL_SCHEMA_VERSION;
   wallId: string;
   segmentIndex: number;
   segmentCount: number;
   revision: number;
+  kind?: BarrierKind;
+  open?: boolean;
   blocking: WallBlocking;
 }
 
@@ -44,6 +48,16 @@ function isBlocking(value: unknown): value is WallBlocking {
     typeof value.blocksLight === "boolean";
 }
 
+export function barrierKind(metadata: WallSourceMetadata): BarrierKind {
+  return metadata.kind === "door" || metadata.kind === "window" ? metadata.kind : "wall";
+}
+
+export function defaultBlocking(kind: BarrierKind, open = false): WallBlocking {
+  if (kind === "window") return { blocksMovement: true, blocksVision: false, blocksLight: false };
+  if (kind === "door" && open) return { blocksMovement: false, blocksVision: false, blocksLight: false };
+  return { blocksMovement: true, blocksVision: true, blocksLight: true };
+}
+
 /**
  * The movement system identifies tokens by Owlbear item type and layer only.
  * It deliberately does not inspect Light attachments, player ownership or
@@ -62,18 +76,16 @@ export function hasWallAwareMoveMarker(item: SceneItem): boolean {
   return isRecord(raw) && raw.schemaVersion === 1 && typeof raw.nonce === "string";
 }
 
-export function createDefaultWallMetadata(wallId: string): WallSourceMetadata {
+export function createDefaultWallMetadata(wallId: string, kind: BarrierKind = "wall"): WallSourceMetadata {
   return {
     schemaVersion: WALL_SCHEMA_VERSION,
     wallId,
     segmentIndex: 0,
     segmentCount: 1,
     revision: 1,
-    blocking: {
-      blocksMovement: true,
-      blocksVision: true,
-      blocksLight: true,
-    },
+    kind,
+    open: kind === "door" ? false : undefined,
+    blocking: defaultBlocking(kind),
   };
 }
 
@@ -86,6 +98,9 @@ export function readWallSourceMetadata(item: SceneItem): WallSourceMetadata | nu
   if (!Number.isInteger(raw.segmentCount) || (raw.segmentCount as number) < 1) return null;
   if (!Number.isInteger(raw.revision) || (raw.revision as number) < 1) return null;
   if (!isBlocking(raw.blocking)) return null;
+  if (raw.kind !== undefined && raw.kind !== "wall" && raw.kind !== "door" && raw.kind !== "window") return null;
+  if (raw.open !== undefined && typeof raw.open !== "boolean") return null;
+  if (raw.kind === "door" && typeof raw.open !== "boolean") return null;
   return raw as unknown as WallSourceMetadata;
 }
 

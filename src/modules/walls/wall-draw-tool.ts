@@ -3,10 +3,10 @@ import type { LineItem, ToolEvent, ToolModeDefinition, Vector2 } from "../../pla
 import { logger } from "../../core/logger.js";
 import { requireGM } from "../../core/permissions.js";
 import { PREFERENCES, readBooleanPreference, writeBooleanPreference } from "../../core/preferences.js";
-import { createWallSources } from "../../scene/walls/source.js";
-import { isLocalWall, isWallSource, readLocalWallMetadata, readWallSourceMetadata, WALL_SOURCE_KEY } from "../../scene/walls/model.js";
+import { createWallSource, createWallSources, setDoorOpenDraft } from "../../scene/walls/source.js";
+import { defaultBlocking, isLocalWall, isWallSource, readLocalWallMetadata, readWallSourceMetadata, WALL_SOURCE_KEY } from "../../scene/walls/model.js";
 import type { WallSourceMetadata } from "../../scene/walls/model.js";
-import { pointToSegmentDistance, transformPoint } from "../../scene/walls/geometry.js";
+import { inverseTransformPoint, pointToSegmentDistance, splitSegmentForOpening, transformPoint } from "../../scene/walls/geometry.js";
 import type { WallReconciler } from "../../scene/walls/reconciler.js";
 
 const TOOL_ID = "com.beholder-vtt/wall-editor";
@@ -15,13 +15,15 @@ const POLYLINE_MODE_ID = TOOL_ID + "/polyline";
 const RECTANGLE_MODE_ID = TOOL_ID + "/rectangle";
 const SELECT_MODE_ID = TOOL_ID + "/select";
 const ERASE_MODE_ID = TOOL_ID + "/erase";
+const DOOR_MODE_ID = TOOL_ID + "/door";
+const WINDOW_MODE_ID = TOOL_ID + "/window";
 const PROPERTIES_ACTION_ID = TOOL_ID + "/properties";
 const SETTINGS_ACTION_ID = TOOL_ID + "/settings";
 const PROPERTIES_POPOVER_ID = "com.beholder-vtt/wall-properties";
 const SETTINGS_POPOVER_ID = "com.beholder-vtt/wall-tools-settings";
 const ZERO: Vector2 = { x: 0, y: 0 };
 const UNIT: Vector2 = { x: 1, y: 1 };
-const MODE_IDS = [SELECT_MODE_ID, DRAW_MODE_ID, POLYLINE_MODE_ID, RECTANGLE_MODE_ID, ERASE_MODE_ID];
+const MODE_IDS = [SELECT_MODE_ID, DRAW_MODE_ID, POLYLINE_MODE_ID, RECTANGLE_MODE_ID, ERASE_MODE_ID, DOOR_MODE_ID, WINDOW_MODE_ID];
 const ACTION_IDS = [PROPERTIES_ACTION_ID, SETTINGS_ACTION_ID];
 
 interface WallHit {
@@ -198,6 +200,24 @@ export class WallDrawTool {
         return false;
       },
     });
+    await createMode(DOOR_MODE_ID, "door.svg", "门：拖动绘制，点击开关", {
+      onToolClick: async (_context, event) => {
+        await this.toggleDoorAt(event.pointerPosition);
+        return false;
+      },
+      onToolDragStart: async (_context, event) => this.startLine(event, "door"),
+      onToolDragMove: async (_context, event) => this.moveLine(event),
+      onToolDragEnd: async (_context, event) => this.endLine(event, "door"),
+      onToolDragCancel: async () => this.cancelLine(),
+      onDeactivate: async () => this.cancelLine(),
+    });
+    await createMode(WINDOW_MODE_ID, "window.svg", "窗：拖动绘制", {
+      onToolDragStart: async (_context, event) => this.startLine(event, "window"),
+      onToolDragMove: async (_context, event) => this.moveLine(event),
+      onToolDragEnd: async (_context, event) => this.endLine(event, "window"),
+      onToolDragCancel: async () => this.cancelLine(),
+      onDeactivate: async () => this.cancelLine(),
+    });
   }
 
   private async registerActions(): Promise<void> {
@@ -295,26 +315,108 @@ export class WallDrawTool {
     }
   }
 
-  private async saveWall(points: Vector2[]): Promise<void> {
-    const sources = createWallSources(points);
+  private async saveWall(points: Vector2[], kind: "wall" | "door" | "window" = "wall"): Promise<void> {
+    const sources = createWallSources(points, kind);
     if (!sources.length) return;
     await OBR.scene.items.addItems(sources);
     await this.reconciler.schedule("wall-created");
     const localItems = await OBR.scene.local.getItems();
     const projectedIds = new Set(localItems.filter(isLocalWall).map((item) => readLocalWallMetadata(item)?.sourceId));
-    if (sources.some((source) => !projectedIds.has(source.id))) {
+    if (sources.some((source) => readWallSourceMetadata(source)?.blocking.blocksVision && !projectedIds.has(source.id))) {
       throw new Error("共享墙体已保存，但至少一个本地阻挡墙未生成。");
     }
     const first = sources[0];
     logger.info("Wall geometry saved.", { wallId: first ? readWallSourceMetadata(first)?.wallId : null, segments: sources.length });
   }
 
-  private async startLine(event: ToolEvent): Promise<void> {
+  private async saveOpening(start: Vector2, end: Vector2, kind: "door" | "window"): Promise<void> {
+    const midpoint = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    const hit = await this.nearestWall(midpoint);
+    const metadata = hit ? readWallSourceMetadata(hit.source) : null;
+    if (!hit || !metadata || (metadata.kind !== undefined && metadata.kind !== "wall")) {
+      throw new Error("Place a door or window along one existing wall segment.");
+    }
+
+    const worldPoints = splitSegmentForOpening(hit.start, hit.end, start, end, hit.tolerance * 0.25);
+    if (!worldPoints || worldPoints.length < 3) {
+      throw new Error("The opening endpoints must lie on the same wall segment.");
+    }
+
+    const group = (await this.wallGroup(metadata.wallId))
+      .sort((a, b) => (readWallSourceMetadata(a)?.segmentIndex ?? 0) - (readWallSourceMetadata(b)?.segmentIndex ?? 0));
+    const parentIndex = group.findIndex((item) => item.id === hit.source.id);
+    if (parentIndex < 0) throw new Error("The target wall changed before the opening could be placed.");
+
+    const position = hit.source.position ?? ZERO;
+    const scale = hit.source.scale ?? UNIT;
+    const rotation = hit.source.rotation ?? 0;
+    const localPoints = worldPoints.map((point) => inverseTransformPoint(point, position, rotation, scale));
+    const replacementCount = localPoints.length - 1;
+    const nextCount = group.length + replacementCount - 1;
+    const revision = metadata.revision + 1;
+    const openingSegmentIndex = localPoints.length === 2
+      ? 0
+      : Math.hypot(worldPoints[0]!.x - hit.start.x, worldPoints[0]!.y - hit.start.y) <= hit.tolerance * 0.25
+        ? 0
+        : Math.hypot(worldPoints[worldPoints.length - 1]!.x - hit.end.x, worldPoints[worldPoints.length - 1]!.y - hit.end.y) <= hit.tolerance * 0.25
+          ? replacementCount - 1
+          : 1;
+    const additions: LineItem[] = [];
+    const replacementMetadata: WallSourceMetadata[] = [];
+
+    for (let index = 0; index < replacementCount; index++) {
+      const partKind: "wall" | "door" | "window" = index === openingSegmentIndex ? kind : "wall";
+      const part = createWallSource(localPoints[index]!, localPoints[index + 1]!);
+      part.position = position;
+      part.rotation = rotation;
+      part.scale = scale;
+      const partMetadata = {
+        ...metadata,
+        segmentIndex: parentIndex + index,
+        segmentCount: nextCount,
+        revision,
+        kind: partKind,
+        ...(partKind === "door" ? { open: false } : { open: undefined }),
+        blocking: partKind === "wall" ? metadata.blocking : defaultBlocking(partKind),
+      };
+      part.metadata = { [WALL_SOURCE_KEY]: partMetadata };
+      replacementMetadata.push(partMetadata);
+      if (index > 0) additions.push(part);
+      else part.id = hit.source.id;
+    }
+
+    await OBR.scene.items.updateItems(group, (drafts) => {
+      for (const draft of drafts) {
+        const current = readWallSourceMetadata(draft);
+        if (!current) continue;
+        if (draft.id === hit.source.id) {
+          const firstPart = localPoints[1];
+          draft.startPosition = localPoints[0]!;
+          draft.endPosition = firstPart!;
+          draft.metadata[WALL_SOURCE_KEY] = replacementMetadata[0];
+          continue;
+        }
+        const oldIndex = group.findIndex((item) => item.id === draft.id);
+        const shiftedIndex = oldIndex > parentIndex ? oldIndex + replacementCount - 1 : oldIndex;
+        draft.metadata[WALL_SOURCE_KEY] = {
+          ...current,
+          segmentIndex: shiftedIndex,
+          segmentCount: nextCount,
+          revision: current.revision + 1,
+        };
+      }
+    });
+    if (additions.length) await OBR.scene.items.addItems(additions);
+    await this.reconciler.schedule("opening-added");
+  }
+
+  private async startLine(event: ToolEvent, kind: "wall" | "door" | "window" = "wall"): Promise<void> {
     await this.cancelLine();
     if (!(await requireGM()) || !(await OBR.scene.isReady())) return;
     const start = await this.snap(event.pointerPosition, true, event.ctrlKey || event.metaKey);
     this.dragStart = start;
-    const preview = this.previewLine(start, start);
+    const color = kind === "door" ? "#65c5a4" : kind === "window" ? "#5ca7db" : undefined;
+    const preview = this.previewLine(start, start, color);
     await OBR.scene.local.addItems([preview]);
     this.linePreviewId = preview.id;
   }
@@ -325,7 +427,7 @@ export class WallDrawTool {
     await this.updatePreviewLines([this.linePreviewId], [{ start: this.dragStart, end }]);
   }
 
-  private async endLine(event: ToolEvent): Promise<void> {
+  private async endLine(event: ToolEvent, kind: "wall" | "door" | "window" = "wall"): Promise<void> {
     const start = this.dragStart;
     this.dragStart = null;
     if (!start) return;
@@ -334,7 +436,10 @@ export class WallDrawTool {
     this.linePreviewId = null;
     if (id) await this.removePreviews([id]);
     if (Math.hypot(end.x - start.x, end.y - start.y) < 4) return;
-    try { await this.saveWall([start, end]); } catch (error) {
+    try {
+      if (kind === "wall") await this.saveWall([start, end]);
+      else await this.saveOpening(start, end, kind);
+    } catch (error) {
       logger.error("Line wall creation failed.", error);
       await OBR.notification.show("墙体保存失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
     }
@@ -462,6 +567,18 @@ export class WallDrawTool {
   private async wallGroup(wallId: string): Promise<LineItem[]> {
     const sources = await this.allWallSources();
     return sources.filter((source) => readWallSourceMetadata(source)?.wallId === wallId);
+  }
+
+  private async toggleDoorAt(point: Vector2): Promise<void> {
+    if (!(await requireGM())) return;
+    const hit = await this.nearestWall(point);
+    if (!hit) return;
+    const metadata = readWallSourceMetadata(hit.source);
+    if (metadata?.kind !== "door") return;
+    await OBR.scene.items.updateItems([hit.source], (drafts) => {
+      for (const draft of drafts) setDoorOpenDraft(draft, !metadata.open);
+    });
+    await this.reconciler.schedule("door-state-changed");
   }
 
   private async setSelection(wallId: string | null): Promise<void> {

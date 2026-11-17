@@ -19,6 +19,26 @@ export function transformPoint(
   };
 }
 
+export function inverseTransformPoint(
+  point: Vector2,
+  position: Vector2,
+  rotationDegrees: number,
+  scale: Vector2,
+): Vector2 {
+  if (Math.abs(scale.x) <= EPSILON || Math.abs(scale.y) <= EPSILON) {
+    throw new Error("Cannot invert a wall source with a zero scale.");
+  }
+  const x = point.x - position.x;
+  const y = point.y - position.y;
+  const radians = -rotationDegrees * Math.PI / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return {
+    x: (x * cos - y * sin) / scale.x,
+    y: (x * sin + y * cos) / scale.y,
+  };
+}
+
 export function pointToSegmentDistance(point: Vector2, start: Vector2, end: Vector2): number {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
@@ -31,6 +51,37 @@ export function pointToSegmentDistance(point: Vector2, start: Vector2, end: Vect
   ));
   const nearest = { x: start.x + t * dx, y: start.y + t * dy };
   return Math.hypot(point.x - nearest.x, point.y - nearest.y);
+}
+
+/** Return the opening endpoints in wall order when both lie on one segment. */
+export function splitSegmentForOpening(
+  wallStart: Vector2,
+  wallEnd: Vector2,
+  openingStart: Vector2,
+  openingEnd: Vector2,
+  tolerance: number,
+): Vector2[] | null {
+  const dx = wallEnd.x - wallStart.x;
+  const dy = wallEnd.y - wallStart.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= EPSILON || tolerance < 0) return null;
+  const project = (point: Vector2) =>
+    ((point.x - wallStart.x) * dx + (point.y - wallStart.y) * dy) / lengthSquared;
+  const tStart = project(openingStart);
+  const tEnd = project(openingEnd);
+  if (pointToSegmentDistance(openingStart, wallStart, wallEnd) > tolerance ||
+      pointToSegmentDistance(openingEnd, wallStart, wallEnd) > tolerance ||
+      tStart < -EPSILON || tStart > 1 + EPSILON || tEnd < -EPSILON || tEnd > 1 + EPSILON ||
+      Math.hypot(openingEnd.x - openingStart.x, openingEnd.y - openingStart.y) <= tolerance) {
+    return null;
+  }
+  const low = Math.max(0, Math.min(tStart, tEnd));
+  const high = Math.min(1, Math.max(tStart, tEnd));
+  if ((high - low) * Math.sqrt(lengthSquared) <= tolerance) return null;
+  const at = (t: number): Vector2 => ({ x: wallStart.x + t * dx, y: wallStart.y + t * dy });
+  const points = [wallStart, at(low), at(high), wallEnd];
+  return points.filter((point, index) => index === 0 ||
+    Math.hypot(point.x - points[index - 1]!.x, point.y - points[index - 1]!.y) > tolerance);
 }
 
 function orientation(a: Vector2, b: Vector2, c: Vector2): number {

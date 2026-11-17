@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   constrainMovement,
+  inverseTransformPoint,
   pointToSegmentDistance,
   segmentToSegmentDistance,
   segmentsIntersect,
+  splitSegmentForOpening,
   transformPoint,
 } from "../dist/scene/walls/geometry.js";
 
@@ -17,6 +19,31 @@ test("transformPoint applies scale, rotation, then translation", () => {
   );
   assert.ok(Math.abs(result.x - 7) < 1e-8);
   assert.ok(Math.abs(result.y - 24) < 1e-8);
+});
+
+test("inverseTransformPoint reverses scale, rotation and translation", () => {
+  const point = { x: 47, y: 19 };
+  const transformed = transformPoint(point, { x: -13, y: 22 }, 37, { x: 2, y: 0.5 });
+  const restored = inverseTransformPoint(transformed, { x: -13, y: 22 }, 37, { x: 2, y: 0.5 });
+  assert.ok(Math.abs(restored.x - point.x) < 1e-8);
+  assert.ok(Math.abs(restored.y - point.y) < 1e-8);
+});
+
+test("opening splits a wall in its direction and rejects geometry off the wall", () => {
+  assert.deepEqual(
+    splitSegmentForOpening(
+      { x: 0, y: 0 }, { x: 100, y: 0 },
+      { x: 70, y: 1 }, { x: 30, y: -1 }, 2,
+    ),
+    [{ x: 0, y: 0 }, { x: 30, y: 0 }, { x: 70, y: 0 }, { x: 100, y: 0 }],
+  );
+  assert.equal(
+    splitSegmentForOpening(
+      { x: 0, y: 0 }, { x: 100, y: 0 },
+      { x: 30, y: 6 }, { x: 70, y: 6 }, 2,
+    ),
+    null,
+  );
 });
 
 test("pointToSegmentDistance measures the nearest point on a segment", () => {
