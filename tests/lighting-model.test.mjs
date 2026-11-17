@@ -5,6 +5,7 @@ import {
   isLightSource,
   LIGHT_SOURCE_KEY,
   readLightSourceMetadata,
+  updateLightSourceMetadata,
 } from "../dist/scene/lighting/model.js";
 
 const baseItem = {
@@ -46,4 +47,13 @@ test("light sources reject impossible radii and cone angles", () => {
     assert.equal(readLightSourceMetadata(item), null);
     assert.equal(isLightSource(item), false);
   }
+});
+
+test("light property edits increment the shared revision and validate the full result", () => {
+  const item = { ...baseItem, type: "LINE", metadata: { [LIGHT_SOURCE_KEY]: createLightMetadata("light-1") } };
+  assert.equal(updateLightSourceMetadata(item, { attenuationRadius: 420, outerAngle: 90, innerAngle: 70 }), true);
+  assert.equal(readLightSourceMetadata(item)?.revision, 2);
+  assert.equal(readLightSourceMetadata(item)?.attenuationRadius, 420);
+  assert.equal(updateLightSourceMetadata(item, { outerAngle: 45 }), false);
+  assert.equal(readLightSourceMetadata(item)?.revision, 2);
 });
