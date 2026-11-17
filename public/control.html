@@ -93,6 +93,23 @@
       <div id="action-status" role="status"></div>
     </section>
 
+    <section class="card" data-gm-only>
+      <div class="card-head"><h2>Scene Fog</h2><span class="tag">Owlbear settings</span></div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>Fill the scene</strong><small>Turn on full-scene fog; turn it off to draw individual fog regions.</small></div>
+        <input id="fog-fill" type="checkbox" />
+      </div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>Fog color</strong><small>Sets the base color used by the scene fog layer.</small></div>
+        <input id="fog-color" type="color" value="#111820" />
+      </div>
+      <div class="setting-row">
+        <div class="setting-copy"><strong>Fog stroke width</strong><small>Used by Owlbear's native fog drawing tools.</small></div>
+        <input id="fog-stroke" type="number" min="1" max="200" value="20" style="width:70px" />
+      </div>
+      <button id="fog-save" class="secondary">Save fog settings</button>
+    </section>
+
     <section class="card">
       <div class="card-head"><h2>模块状态</h2><span class="tag">统一管理</span></div>
       <div class="module-row"><span class="module-name">地图与墙体</span><span class="tag">已启用</span></div>
