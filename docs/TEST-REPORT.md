@@ -1,4 +1,10 @@
-# Test report - Beholder VTT 0.0.17
+# Test report - Beholder VTT 0.0.18
+
+## 0.0.18 labels and door scope
+
+- Restore readable toolbar labels and wall-property dialog text with CJK font fallbacks.
+- Door state edits target only segments marked as doors within a connected wall group.
+- Type check, production build, and all 35 automated tests pass.
 
 ## 0.0.17 wall junction connections
 
