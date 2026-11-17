@@ -10,6 +10,10 @@ const roleLabel = document.querySelector<HTMLElement>("#role-label");
 const wallCount = document.querySelector<HTMLElement>("#wall-count");
 const tokenCount = document.querySelector<HTMLElement>("#token-count");
 const activeToolLabel = document.querySelector<HTMLElement>("#active-tool-id");
+const fogFill = document.querySelector<HTMLInputElement>("#fog-fill");
+const fogColor = document.querySelector<HTMLInputElement>("#fog-color");
+const fogStroke = document.querySelector<HTMLInputElement>("#fog-stroke");
+const fogSave = document.querySelector<HTMLButtonElement>("#fog-save");
 
 function setStatus(message: string): void {
   if (actionStatus) actionStatus.textContent = message;
@@ -62,6 +66,32 @@ OBR.onReady(async () => {
       }
       const hint = document.querySelector<HTMLElement>("#client-hint");
       if (hint) hint.textContent = "玩家客户端：移动接管为本地设置；墙体绘制工具由 GM 管理。";
+    }
+
+    if (isGM && fogFill && fogColor && fogStroke) {
+      const [filled, color, strokeWidth] = await Promise.all([
+        OBR.scene.fog.getFilled(),
+        OBR.scene.fog.getColor(),
+        OBR.scene.fog.getStrokeWidth(),
+      ]);
+      fogFill.checked = filled;
+      fogColor.value = /^#[0-9a-f]{6}$/i.test(color) ? color : "#111820";
+      fogStroke.value = String(strokeWidth);
+      fogSave?.addEventListener("click", async () => {
+        const width = Number(fogStroke.value);
+        if (!Number.isFinite(width) || width < 1 || width > 200) {
+          setStatus("Fog stroke width must be between 1 and 200.");
+          return;
+        }
+        try {
+          await OBR.scene.fog.setColor(fogColor.value);
+          await OBR.scene.fog.setStrokeWidth(width);
+          await OBR.scene.fog.setFilled(fogFill.checked);
+          setStatus("Scene fog settings saved.");
+        } catch (error) {
+          setStatus("Could not save scene fog: " + (error instanceof Error ? error.message : "unknown error"));
+        }
+      });
     }
 
     await updateActiveToolLabel();
