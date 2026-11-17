@@ -47,9 +47,10 @@
 
 - [x] Shared hidden light definitions and local native LIGHT projections.
 - [x] GM point-light placement tool with a default profile.
+- [x] GM editor for radius, source softness, falloff, and cone angles.
 - [x] Local projection reconciliation after scene change, reload, and reconnect.
 - [x] GM controls for scene fog fill, base color, and drawing stroke width.
-- [ ] Light properties editor and attachment to character tokens.
+- [ ] Attachment to character tokens.
 - [ ] Verify vision and light occlusion against walls, doors, and windows in Owlbear.
 - [ ] Ambient illumination and custom color/brightness rendering strategy.
 - [ ] GM/player fog and light persistence acceptance.
