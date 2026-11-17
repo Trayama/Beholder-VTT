@@ -1,3 +1,23 @@
+# Test report - Beholder VTT 0.0.13
+
+## 0.0.13 implementation record
+
+- Shared LINE light definitions are projected into one local Owlbear LIGHT per connected client.
+- Reconciliation repairs missing projections, updates stale projections, removes duplicates, and cleans up deleted sources.
+- GM can place a default-radius point light from the new Lighting toolbar tool.
+- The global control panel reads and writes Owlbear scene fog fill, color, and stroke width settings.
+- Native point-light color, brightness, property editing, token attachment, and wall light-blocking integration remain incomplete.
+- Real Owlbear room verification remains required for light visibility, wall/door/window occlusion, player fog, reload, and reconnect behavior.
+
+### 0.0.13 room checklist
+
+1. Install or update the extension and reload the room as GM and player.
+2. Confirm only GM sees the Lighting tool; place a light and confirm it appears on the player client.
+3. Place a second light, reload both clients, and confirm each shared source has exactly one visible local projection.
+4. Delete a shared light source as GM and confirm the local light disappears on both clients.
+5. Toggle scene fog fill and change color/stroke width; confirm player client receives the room setting.
+6. Test a point light behind a wall, closed door, open door, and window; record native visibility and shadow behavior.
+
 # Test report — Beholder VTT 0.0.12
 
 Date: 2026-11-17
@@ -65,6 +85,24 @@ Use one GM client and one player client in the same room.
 11. Press Escape during token movement and during a transformer gesture. Confirm cancellation and mode restoration.
 12. Repeat on GM and player clients simultaneously, including rapid drags, switching tools, scene reload, reconnect and extension restart.
 13. Confirm the GM-authoritative MovementBlocker remains a safety net for movement performed by other tools.
+
+## 0.0.13 lighting and fog implementation record
+
+- Shared LINE light definitions are projected into one local Owlbear LIGHT per connected client.
+- Reconciliation repairs missing projections, updates stale projections, removes duplicates, and cleans up deleted sources.
+- GM can place a default-radius point light from the new Lighting toolbar tool.
+- The global control panel reads and writes Owlbear scene fog fill, color, and stroke width settings.
+- Native point-light color, brightness, property editing, token attachment, and wall light-blocking integration remain incomplete.
+- Real Owlbear room verification remains required for light visibility, wall/door/window occlusion, player fog, reload, and reconnect behavior.
+
+### 0.0.13 room checklist
+
+1. Install or update the extension and reload the room as GM and player.
+2. Confirm only GM sees the Lighting tool; place a light and confirm it appears on the player client.
+3. Place a second light, reload both clients, and confirm each shared source has exactly one visible local projection.
+4. Delete a shared light source as GM and confirm the local light disappears on both clients.
+5. Toggle scene fog fill and change color/stroke width; confirm player client receives the room setting.
+6. Test a point light behind a wall, closed door, open door, and window; record native visibility and shadow behavior.
 
 ## Important boundary
 
