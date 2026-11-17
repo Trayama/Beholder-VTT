@@ -6,7 +6,7 @@ import { PREFERENCES, readBooleanPreference, writeBooleanPreference } from "../.
 import { createWallSource, createWallSources, setDoorOpenDraft } from "../../scene/walls/source.js";
 import { defaultBlocking, isLocalWall, isWallSource, readLocalWallMetadata, readWallSourceMetadata, WALL_SOURCE_KEY } from "../../scene/walls/model.js";
 import type { WallSourceMetadata } from "../../scene/walls/model.js";
-import { findConnectedWallGroups, inverseTransformPoint, pointToSegmentDistance, splitSegmentForOpening, transformPoint } from "../../scene/walls/geometry.js";
+import { closestPointOnSegment, findConnectedWallGroups, inverseTransformPoint, pointToSegmentDistance, splitSegmentForOpening, transformPoint } from "../../scene/walls/geometry.js";
 import type { WallReconciler } from "../../scene/walls/reconciler.js";
 
 const TOOL_ID = "com.beholder-vtt/wall-editor";
@@ -114,7 +114,7 @@ export class WallDrawTool {
         id: TOOL_ID,
         icons: [{
           icon: this.asset("icon.svg"),
-          label: "Beholder VTT · 墙体编辑器",
+          label: "Beholder VTT �� ǽ��༭��",
           filter: { roles: ["GM"] },
         }],
         defaultMode: SELECT_MODE_ID,
@@ -126,7 +126,7 @@ export class WallDrawTool {
     } catch (error) {
       await this.removeToolbarRegistrations();
       logger.error("Wall editor registration failed.", error);
-      await OBR.notification.show("墙体工具注册失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
+      await OBR.notification.show("ǽ�幤��ע��ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
       throw error;
     }
   }
@@ -154,7 +154,7 @@ export class WallDrawTool {
       });
     };
 
-    await createMode(SELECT_MODE_ID, "select.svg", "选择 / 移动 / 编辑节点", {
+    await createMode(SELECT_MODE_ID, "select.svg", "ѡ�� / �ƶ� / �༭�ڵ�", {
       onToolClick: async (_context, event) => {
         await this.selectWallAt(event.pointerPosition);
         return false;
@@ -166,7 +166,7 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelEdit(),
     });
 
-    await createMode(DRAW_MODE_ID, "draw.svg", "直线墙体（拖动）", {
+    await createMode(DRAW_MODE_ID, "draw.svg", "ֱ��ǽ�壨�϶���", {
       onToolDragStart: async (_context, event) => this.startLine(event),
       onToolDragMove: async (_context, event) => this.moveLine(event),
       onToolDragEnd: async (_context, event) => this.endLine(event),
@@ -174,7 +174,7 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelLine(),
     });
 
-    await createMode(POLYLINE_MODE_ID, "polyline.svg", "连续折线（点击节点，双击完成）", {
+    await createMode(POLYLINE_MODE_ID, "polyline.svg", "�������ߣ�����ڵ㣬˫����ɣ�", {
       onToolClick: async (_context, event) => this.addPolylinePoint(event),
       onToolMove: async (_context, event) => this.movePolylinePreview(event),
       onToolDoubleClick: async (_context, event) => {
@@ -186,7 +186,7 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelPolyline(),
     });
 
-    await createMode(RECTANGLE_MODE_ID, "rectangle.svg", "矩形房间（拖动）", {
+    await createMode(RECTANGLE_MODE_ID, "rectangle.svg", "���η��䣨�϶���", {
       onToolDragStart: async (_context, event) => this.startRectangle(event),
       onToolDragMove: async (_context, event) => this.moveRectangle(event),
       onToolDragEnd: async (_context, event) => this.endRectangle(event),
@@ -194,13 +194,13 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelRectangle(),
     });
 
-    await createMode(ERASE_MODE_ID, "erase.svg", "删除整条墙体（点击）", {
+    await createMode(ERASE_MODE_ID, "erase.svg", "ɾ������ǽ�壨�����", {
       onToolClick: async (_context, event) => {
         await this.eraseAt(event.pointerPosition);
         return false;
       },
     });
-    await createMode(DOOR_MODE_ID, "door.svg", "门：拖动绘制，点击开关", {
+    await createMode(DOOR_MODE_ID, "door.svg", "�ţ��϶����ƣ��������", {
       onToolClick: async (_context, event) => {
         await this.toggleDoorAt(event.pointerPosition);
         return false;
@@ -211,7 +211,7 @@ export class WallDrawTool {
       onToolDragCancel: async () => this.cancelLine(),
       onDeactivate: async () => this.cancelLine(),
     });
-    await createMode(WINDOW_MODE_ID, "window.svg", "窗：拖动绘制", {
+    await createMode(WINDOW_MODE_ID, "window.svg", "�����϶�����", {
       onToolDragStart: async (_context, event) => this.startLine(event, "window"),
       onToolDragMove: async (_context, event) => this.moveLine(event),
       onToolDragEnd: async (_context, event) => this.endLine(event, "window"),
@@ -226,7 +226,7 @@ export class WallDrawTool {
       id: SETTINGS_ACTION_ID,
       icons: [{
         icon: this.asset("icons/settings.svg"),
-        label: "墙体工具设置与管理",
+        label: "ǽ�幤�����������",
         filter,
       }],
       onClick: async (_context, elementId) => this.openSettings(elementId),
@@ -236,7 +236,7 @@ export class WallDrawTool {
       id: PROPERTIES_ACTION_ID,
       icons: [{
         icon: this.asset("icons/properties.svg"),
-        label: "编辑选中墙体属性",
+        label: "�༭ѡ��ǽ������",
         filter,
       }],
       onClick: async (_context, elementId) => this.openProperties(elementId),
@@ -267,6 +267,12 @@ export class WallDrawTool {
           nearest = endpoint;
           nearestDistance = distance;
         }
+      }
+      const onSegment = closestPointOnSegment(snapped, segment.start, segment.end);
+      const segmentDistance = Math.hypot(snapped.x - onSegment.x, snapped.y - onSegment.y);
+      if (segmentDistance < nearestDistance) {
+        nearest = onSegment;
+        nearestDistance = segmentDistance;
       }
     }
     return nearest ?? snapped;
@@ -374,7 +380,7 @@ export class WallDrawTool {
     const localItems = await OBR.scene.local.getItems();
     const projectedIds = new Set(localItems.filter(isLocalWall).map((item) => readLocalWallMetadata(item)?.sourceId));
     if (sources.some((source) => readWallSourceMetadata(source)?.blocking.blocksVision && !projectedIds.has(source.id))) {
-      throw new Error("共享墙体已保存，但至少一个本地阻挡墙未生成。");
+      throw new Error("����ǽ���ѱ��棬������һ�������赲ǽδ���ɡ�");
     }
     const first = sources[0];
     logger.info("Wall geometry saved.", { wallId: first ? readWallSourceMetadata(first)?.wallId : null, segments: sources.length });
@@ -492,7 +498,7 @@ export class WallDrawTool {
       else await this.saveOpening(start, end, kind);
     } catch (error) {
       logger.error("Line wall creation failed.", error);
-      await OBR.notification.show("墙体保存失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
+      await OBR.notification.show("ǽ�屣��ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
     }
   }
 
@@ -534,7 +540,7 @@ export class WallDrawTool {
     }
     try { await this.saveWall(points); } catch (error) {
       logger.error("Polyline wall creation failed.", error);
-      await OBR.notification.show("折线保存失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
+      await OBR.notification.show("���߱���ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
     }
   }
 
@@ -576,7 +582,7 @@ export class WallDrawTool {
     if (Math.abs(end.x - start.x) < 4 || Math.abs(end.y - start.y) < 4) return;
     try { await this.saveWall(this.rectanglePoints(start, end)); } catch (error) {
       logger.error("Rectangle wall creation failed.", error);
-      await OBR.notification.show("矩形墙体保存失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
+      await OBR.notification.show("����ǽ�屣��ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
     }
   }
 
@@ -761,7 +767,7 @@ export class WallDrawTool {
       await this.setSelection(session.wallId);
     } catch (error) {
       logger.error("Wall edit failed.", error);
-      await OBR.notification.show("墙体编辑失败：" + (error instanceof Error ? error.message : "未知错误"), "ERROR");
+      await OBR.notification.show("ǽ��༭ʧ�ܣ�" + (error instanceof Error ? error.message : "δ֪����"), "ERROR");
     }
   }
 
