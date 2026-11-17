@@ -51,11 +51,11 @@ This is a hard architectural constraint for the wall system. Do not replace it w
 
 ## Current implementation boundary
 
-Version 0.0.12 includes the unified control panel, wall drawing and editing, doors and windows cut into a wall segment, group-preserving opening anchors, synchronized door state, native Move Tool Mode integration, and a GM-authoritative post-commit movement correction adapter.
+Version 0.0.13 includes the unified control panel, wall drawing and editing, doors and windows cut into a wall segment, group-preserving opening anchors, synchronized door state, native Move Tool Mode integration, a GM-authoritative post-commit movement correction adapter, shared point-light definitions with per-client LIGHT projections, and Owlbear scene fog controls.
 
 The local WALL projection keeps native `blocking=false`. A closed door has all three blocking flags enabled; opening it turns all three off. A window defaults to movement blocking while vision and light pass through. Openings share the parent wall's `wallId`, so wall-group movement and node edits keep their geometry together.
 
-The GM movement adapter uses shared LINE source geometry and the `blocksMovement` flag. Light blocking remains independent metadata; it is not yet connected to a light adapter. Dynamic lighting and fog are not implemented.
+The GM movement adapter uses shared LINE source geometry and the `blocksMovement` flag. Light sources are stored as hidden shared LINE definitions and projected as local Owlbear LIGHT items on each client. Wall light-blocking metadata is not yet connected to those projections. Owlbear's native light builder exposes radius, falloff, cone angles, and light type; it has no color or brightness fields, so those need a separately validated rendering strategy.
 
 ## Performance boundary
 
