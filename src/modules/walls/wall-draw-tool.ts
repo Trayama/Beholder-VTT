@@ -114,7 +114,7 @@ export class WallDrawTool {
         id: TOOL_ID,
         icons: [{
           icon: this.asset("icon.svg"),
-          label: "Beholder VTT �� ǽ��༭��",
+          label: "Beholder VTT - Wall Editor",
           filter: { roles: ["GM"] },
         }],
         defaultMode: SELECT_MODE_ID,
@@ -154,7 +154,7 @@ export class WallDrawTool {
       });
     };
 
-    await createMode(SELECT_MODE_ID, "select.svg", "ѡ�� / �ƶ� / �༭�ڵ�", {
+    await createMode(SELECT_MODE_ID, "select.svg", "Select / Move / Edit nodes", {
       onToolClick: async (_context, event) => {
         await this.selectWallAt(event.pointerPosition);
         return false;
@@ -166,7 +166,7 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelEdit(),
     });
 
-    await createMode(DRAW_MODE_ID, "draw.svg", "ֱ��ǽ�壨�϶���", {
+    await createMode(DRAW_MODE_ID, "draw.svg", "Draw wall (drag)", {
       onToolDragStart: async (_context, event) => this.startLine(event),
       onToolDragMove: async (_context, event) => this.moveLine(event),
       onToolDragEnd: async (_context, event) => this.endLine(event),
@@ -174,7 +174,7 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelLine(),
     });
 
-    await createMode(POLYLINE_MODE_ID, "polyline.svg", "�������ߣ�����ڵ㣬˫����ɣ�", {
+    await createMode(POLYLINE_MODE_ID, "polyline.svg", "Polyline (click points, double-click to finish)", {
       onToolClick: async (_context, event) => this.addPolylinePoint(event),
       onToolMove: async (_context, event) => this.movePolylinePreview(event),
       onToolDoubleClick: async (_context, event) => {
@@ -186,7 +186,7 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelPolyline(),
     });
 
-    await createMode(RECTANGLE_MODE_ID, "rectangle.svg", "���η��䣨�϶���", {
+    await createMode(RECTANGLE_MODE_ID, "rectangle.svg", "Rectangle (drag)", {
       onToolDragStart: async (_context, event) => this.startRectangle(event),
       onToolDragMove: async (_context, event) => this.moveRectangle(event),
       onToolDragEnd: async (_context, event) => this.endRectangle(event),
@@ -194,13 +194,13 @@ export class WallDrawTool {
       onDeactivate: async () => this.cancelRectangle(),
     });
 
-    await createMode(ERASE_MODE_ID, "erase.svg", "ɾ������ǽ�壨�����", {
+    await createMode(ERASE_MODE_ID, "erase.svg", "Erase wall group (click)", {
       onToolClick: async (_context, event) => {
         await this.eraseAt(event.pointerPosition);
         return false;
       },
     });
-    await createMode(DOOR_MODE_ID, "door.svg", "�ţ��϶����ƣ��������", {
+    await createMode(DOOR_MODE_ID, "door.svg", "Door (drag along wall to place; click to toggle)", {
       onToolClick: async (_context, event) => {
         await this.toggleDoorAt(event.pointerPosition);
         return false;
@@ -211,7 +211,7 @@ export class WallDrawTool {
       onToolDragCancel: async () => this.cancelLine(),
       onDeactivate: async () => this.cancelLine(),
     });
-    await createMode(WINDOW_MODE_ID, "window.svg", "�����϶�����", {
+    await createMode(WINDOW_MODE_ID, "window.svg", "Window (drag along wall to place)", {
       onToolDragStart: async (_context, event) => this.startLine(event, "window"),
       onToolDragMove: async (_context, event) => this.moveLine(event),
       onToolDragEnd: async (_context, event) => this.endLine(event, "window"),
