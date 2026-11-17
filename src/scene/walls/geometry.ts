@@ -1,0 +1,262 @@
+import type { Vector2 } from "../../platform/obr.js";
+
+const EPSILON = 1e-8;
+
+export function transformPoint(
+  point: Vector2,
+  position: Vector2,
+  rotationDegrees: number,
+  scale: Vector2,
+): Vector2 {
+  const scaledX = point.x * scale.x;
+  const scaledY = point.y * scale.y;
+  const radians = rotationDegrees * Math.PI / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return {
+    x: position.x + scaledX * cos - scaledY * sin,
+    y: position.y + scaledX * sin + scaledY * cos,
+  };
+}
+
+export function inverseTransformPoint(
+  point: Vector2,
+  position: Vector2,
+  rotationDegrees: number,
+  scale: Vector2,
+): Vector2 {
+  if (Math.abs(scale.x) <= EPSILON || Math.abs(scale.y) <= EPSILON) {
+    throw new Error("Cannot invert a wall source with a zero scale.");
+  }
+  const x = point.x - position.x;
+  const y = point.y - position.y;
+  const radians = -rotationDegrees * Math.PI / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return {
+    x: (x * cos - y * sin) / scale.x,
+    y: (x * sin + y * cos) / scale.y,
+  };
+}
+
+export function pointToSegmentDistance(point: Vector2, start: Vector2, end: Vector2): number {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= EPSILON) {
+    return Math.hypot(point.x - start.x, point.y - start.y);
+  }
+  const t = Math.max(0, Math.min(1,
+    ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared,
+  ));
+  const nearest = { x: start.x + t * dx, y: start.y + t * dy };
+  return Math.hypot(point.x - nearest.x, point.y - nearest.y);
+}
+
+/** Return the opening endpoints in wall order when both lie on one segment. */
+export function splitSegmentForOpening(
+  wallStart: Vector2,
+  wallEnd: Vector2,
+  openingStart: Vector2,
+  openingEnd: Vector2,
+  tolerance: number,
+): Vector2[] | null {
+  const dx = wallEnd.x - wallStart.x;
+  const dy = wallEnd.y - wallStart.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= EPSILON || tolerance < 0) return null;
+  const project = (point: Vector2) =>
+    ((point.x - wallStart.x) * dx + (point.y - wallStart.y) * dy) / lengthSquared;
+  const tStart = project(openingStart);
+  const tEnd = project(openingEnd);
+  if (pointToSegmentDistance(openingStart, wallStart, wallEnd) > tolerance ||
+      pointToSegmentDistance(openingEnd, wallStart, wallEnd) > tolerance ||
+      tStart < -EPSILON || tStart > 1 + EPSILON || tEnd < -EPSILON || tEnd > 1 + EPSILON ||
+      Math.hypot(openingEnd.x - openingStart.x, openingEnd.y - openingStart.y) <= tolerance) {
+    return null;
+  }
+  const low = Math.max(0, Math.min(tStart, tEnd));
+  const high = Math.min(1, Math.max(tStart, tEnd));
+  if ((high - low) * Math.sqrt(lengthSquared) <= tolerance) return null;
+  const at = (t: number): Vector2 => ({ x: wallStart.x + t * dx, y: wallStart.y + t * dy });
+  const points = [wallStart, at(low), at(high), wallEnd];
+  return points.filter((point, index) => index === 0 ||
+    Math.hypot(point.x - points[index - 1]!.x, point.y - points[index - 1]!.y) > tolerance);
+}
+
+function orientation(a: Vector2, b: Vector2, c: Vector2): number {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+function onSegment(a: Vector2, b: Vector2, point: Vector2): boolean {
+  return point.x >= Math.min(a.x, b.x) - EPSILON &&
+    point.x <= Math.max(a.x, b.x) + EPSILON &&
+    point.y >= Math.min(a.y, b.y) - EPSILON &&
+    point.y <= Math.max(a.y, b.y) + EPSILON;
+}
+
+export function segmentsIntersect(a: Vector2, b: Vector2, c: Vector2, d: Vector2): boolean {
+  const o1 = orientation(a, b, c);
+  const o2 = orientation(a, b, d);
+  const o3 = orientation(c, d, a);
+  const o4 = orientation(c, d, b);
+
+  if (((o1 > EPSILON && o2 < -EPSILON) || (o1 < -EPSILON && o2 > EPSILON)) &&
+      ((o3 > EPSILON && o4 < -EPSILON) || (o3 < -EPSILON && o4 > EPSILON))) {
+    return true;
+  }
+
+  if (Math.abs(o1) <= EPSILON && onSegment(a, b, c)) return true;
+  if (Math.abs(o2) <= EPSILON && onSegment(a, b, d)) return true;
+  if (Math.abs(o3) <= EPSILON && onSegment(c, d, a)) return true;
+  if (Math.abs(o4) <= EPSILON && onSegment(c, d, b)) return true;
+  return false;
+}
+
+export function segmentToSegmentDistance(a: Vector2, b: Vector2, c: Vector2, d: Vector2): number {
+  if (segmentsIntersect(a, b, c, d)) return 0;
+  return Math.min(
+    pointToSegmentDistance(a, c, d),
+    pointToSegmentDistance(b, c, d),
+    pointToSegmentDistance(c, a, b),
+    pointToSegmentDistance(d, a, b),
+  );
+}
+
+export interface WallSegment2D {
+  start: Vector2;
+  end: Vector2;
+}
+
+export interface WallConnectionCandidate extends WallSegment2D {
+  wallId: string;
+}
+
+export function closestPointOnSegment(point: Vector2, start: Vector2, end: Vector2): Vector2 {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= EPSILON) return { ...start };
+  const t = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared));
+  return { x: start.x + dx * t, y: start.y + dy * t };
+}
+
+/** Return existing wall groups touched by a new path at endpoints, T-junctions, or crossings. */
+export function findConnectedWallGroups(
+  points: Vector2[],
+  existing: WallConnectionCandidate[],
+  tolerance: number,
+): string[] {
+  if (tolerance < 0 || points.length === 0 || existing.length === 0) return [];
+  const groups = new Set<string>();
+  for (const point of points) {
+    for (const segment of existing) {
+      if (pointToSegmentDistance(point, segment.start, segment.end) <= tolerance) {
+        groups.add(segment.wallId);
+      }
+    }
+  }
+  for (let index = 0; index < points.length - 1; index++) {
+    const start = points[index]!;
+    const end = points[index + 1]!;
+    for (const segment of existing) {
+      // Midpoint proximity alone would merge nearby parallel walls. T-junctions
+      // are handled by the vertex-to-segment pass above; this catches true crossings.
+      if (segmentsIntersect(start, end, segment.start, segment.end)) groups.add(segment.wallId);
+    }
+  }
+  return [...groups].sort();
+}
+
+export interface MovementFootprint {
+  center: Vector2;
+  radius: number;
+}
+
+/**
+ * Returns the last safe point along a token movement segment before its
+ * circular footprint touches a blocking wall. A null result means the move
+ * is clear. The calculation uses the token's bounding-circle radius.
+ */
+export function constrainMovement(
+  start: Vector2,
+  end: Vector2,
+  walls: WallSegment2D[],
+  radius: number,
+): Vector2 | null {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= EPSILON || walls.length === 0) return null;
+
+  const safeRadius = Math.max(0, radius);
+  let earliest = 1;
+
+  for (const wall of walls) {
+    const startDistance = pointToSegmentDistance(start, wall.start, wall.end);
+    const endDistance = pointToSegmentDistance(end, wall.start, wall.end);
+    const crossesWall = segmentsIntersect(start, end, wall.start, wall.end);
+
+    if (startDistance <= safeRadius + EPSILON) {
+      if (crossesWall || endDistance < startDistance - EPSILON) return { ...start };
+      continue;
+    }
+
+    if (segmentToSegmentDistance(start, end, wall.start, wall.end) > safeRadius + EPSILON) {
+      continue;
+    }
+
+    let low = 0;
+    let high = 1;
+    for (let iteration = 0; iteration < 28; iteration += 1) {
+      const middle = (low + high) / 2;
+      const point = { x: start.x + dx * middle, y: start.y + dy * middle };
+      const distance = segmentToSegmentDistance(start, point, wall.start, wall.end);
+      if (distance > safeRadius) low = middle;
+      else high = middle;
+    }
+
+    const safetyMargin = Math.min(0.02, 1 / length);
+    earliest = Math.min(earliest, Math.max(0, low - safetyMargin));
+  }
+
+  if (earliest >= 1 - EPSILON) return null;
+  return { x: start.x + dx * earliest, y: start.y + dy * earliest };
+}
+
+/**
+ * Constrains a shared translation for a group of selected items. Every
+ * character/mount footprint must remain clear; non-token selected items can
+ * follow the same resulting group delta without independently blocking it.
+ */
+export function constrainGroupDelta(
+  delta: Vector2,
+  footprints: MovementFootprint[],
+  walls: WallSegment2D[],
+): Vector2 {
+  const lengthSquared = delta.x * delta.x + delta.y * delta.y;
+  if (lengthSquared <= EPSILON || footprints.length === 0 || walls.length === 0) {
+    return { ...delta };
+  }
+
+  let allowedFraction = 1;
+  for (const footprint of footprints) {
+    const desired = {
+      x: footprint.center.x + delta.x,
+      y: footprint.center.y + delta.y,
+    };
+    const safe = constrainMovement(footprint.center, desired, walls, footprint.radius);
+    if (!safe) continue;
+
+    const fraction = (
+      (safe.x - footprint.center.x) * delta.x +
+      (safe.y - footprint.center.y) * delta.y
+    ) / lengthSquared;
+    allowedFraction = Math.min(allowedFraction, Math.max(0, Math.min(1, fraction)));
+  }
+
+  return {
+    x: delta.x * allowedFraction,
+    y: delta.y * allowedFraction,
+  };
+}
