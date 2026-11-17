@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Light properties</title>
+  <title>光源设置</title>
   <style>
     :root { color-scheme:dark; font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:#1a2029; color:#e9edf4; }
     * { box-sizing:border-box; }
@@ -23,17 +23,17 @@
   </script>
 </head>
 <body>
-  <h1>Light properties</h1>
-  <p>These settings use Owlbear's native LIGHT fields. Color and brightness are not exposed by the native light builder.</p>
-  <label>Shared light <select id="light-source"></select></label>
-  <label>Attach to token <select id="attached-token"><option value="">No attachment</option></select></label>
-  <label>Outer radius <input id="radius" type="number" min="1" step="1" /></label>
-  <label>Source softness radius <input id="source-radius" type="number" min="0" step="1" /></label>
-  <label>Falloff <input id="falloff" type="number" min="0" max="3" step="0.05" /></label>
-  <label>Inner cone angle <input id="inner-angle" type="number" min="0" max="360" step="1" /></label>
-  <label>Outer cone angle <input id="outer-angle" type="number" min="0" max="360" step="1" /></label>
+  <h1>光源设置</h1>
+  <p>调整光源范围和角度，并可将光源绑定到角色棋子。</p>
+  <label>选择光源 <select id="light-source"></select></label>
+  <label>绑定棋子 <select id="attached-token"><option value="">不绑定</option></select></label>
+  <label>光照半径 <input id="radius" type="number" min="1" step="1" /></label>
+  <label>光源柔化半径 <input id="source-radius" type="number" min="0" step="1" /></label>
+  <label>衰减 <input id="falloff" type="number" min="0" max="3" step="0.05" /></label>
+  <label>内角度 <input id="inner-angle" type="number" min="0" max="360" step="1" /></label>
+  <label>外角度 <input id="outer-angle" type="number" min="0" max="360" step="1" /></label>
   <div id="status" role="status"></div>
-  <footer><button id="cancel">Cancel</button><button id="save" class="primary">Save</button></footer>
+  <footer><button id="delete-light">删除光源</button><button id="cancel">取消</button><button id="save" class="primary">保存</button></footer>
   <script type="module" src="./light-properties.js"></script>
 </body>
 </html>
