@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.17 - Wall junction connections
+
+- Snap newly drawn wall vertices to existing segment interiors as well as endpoints.
+- Merge wall groups at T-junctions and true crossings while avoiding joins between nearby parallel walls.
+- Keep explicit geometry splitting at junctions and live-room seam acceptance open.
+
 ## 0.0.16 - Automatic endpoint group connections
 
 - Connect newly drawn walls to every existing wall group whose endpoint is snapped within tolerance.
@@ -27,7 +33,7 @@
 - Add GM controls for Owlbear scene fog fill, base color, and drawing stroke width.
 - Keep light color, brightness, editing controls, and live GM/player acceptance open.
 
-## 0.0.12 — Doors, windows, and Windows build support
+## 0.0.12 �� Doors, windows, and Windows build support
 
 - Add door and window drawing modes to the wall editor.
 - Split a wall segment when placing an opening so the wall no longer blocks through the opening.
@@ -38,7 +44,7 @@
 - Fix the production build on Windows by invoking the TypeScript compiler through Node.
 - Keep real Owlbear GM/player room acceptance pending.
 
-## 0.0.6 — Control panel and movement correction
+## 0.0.6 �� Control panel and movement correction
 
 - Replace the tabbed control panel with a single functional dashboard.
 - Put toolbar visibility, free/grid drawing, endpoint snap, GM guides, wall properties, undo/redo and clear actions in one place.
@@ -54,13 +60,13 @@
 
 Automated validation and live Owlbear room verification are tracked separately. The real GM/player room acceptance remains pending.
 
-## 0.0.5 — Initial movement guard and control panel
+## 0.0.5 �� Initial movement guard and control panel
 
 - Add the first movement collision observer and local control panel.
 - Add free/grid snap preference and endpoint snap setting.
 - Add GM / player role-specific panel controls.
 
-## 0.0.4 — Restore the wall editor workflow
+## 0.0.4 �� Restore the wall editor workflow
 
 - Add a permanent top-left Beholder VTT control popover.
 - Add a local preference to show or hide the right-side wall editor tool.
@@ -72,18 +78,18 @@ Automated validation and live Owlbear room verification are tracked separately. 
 - Group multi-segment walls by a shared wall ID and segment indices.
 - Reduce unnecessary wall reconciliation by ignoring unrelated scene-item changes.
 
-## 0.0.3 — Restore GitHub Pages hosting
+## 0.0.3 �� Restore GitHub Pages hosting
 
 - Serve the extension Manifest, background HTML, JavaScript, and icon from one GitHub Pages origin.
 - Keep jsDelivr only for third-party SDK dependencies, not the extension entry page.
 - Switch the deployment workflow from publishing to the official GitHub Pages artifact deployment flow.
 
-## 0.0.2 — Toolbar registration fix
+## 0.0.2 �� Toolbar registration fix
 
 - Make wall tool registration idempotent across background iframe reloads.
 - Follow Owlbear's documented custom-tool creation sequence and omit premature defaultMode registration.
 
-## 0.0.1 — Initial development slice
+## 0.0.1 �� Initial development slice
 
 - Create the independent TypeScript Owlbear extension project.
 - Add the module registry, logger, and GM permission helper.
