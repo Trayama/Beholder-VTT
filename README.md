@@ -1,4 +1,4 @@
-## 0.0.17 preview
+## 0.0.18 preview
 
 GM can place shared point lights, edit radius/softness/falloff/cone angles, and set Owlbear scene fog. Wall, door, and window sources remain shared; WALL and LIGHT effects are projected locally on each client.
 
@@ -8,7 +8,7 @@ Known gaps: custom light color/brightness, independent wall-to-light occlusion, 
 
 ���� Owlbear Rodeo ��������ģ�黯�������޹� TRPG ������չ����ǰ�����ص��ǵ�ͼ������ǽ���֪�ƶ���
 
-**��ǰ�汾��0.0.17������Ԥ����**  
+**��ǰ�汾��0.0.18������Ԥ����**  
 **����֤��GPL-3.0-only**
 
 ## ��װ
