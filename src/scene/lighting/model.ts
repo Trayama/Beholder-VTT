@@ -22,6 +22,10 @@ export interface LocalLightMetadata {
   sourceRevision: number;
 }
 
+export function lightAttachmentTarget(source: Pick<SceneItem, "id" | "attachedTo">): string {
+  return source.attachedTo || source.id;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
