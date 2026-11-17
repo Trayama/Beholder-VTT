@@ -108,8 +108,8 @@ export function segmentsIntersect(a: Vector2, b: Vector2, c: Vector2, d: Vector2
 
   if (Math.abs(o1) <= EPSILON && onSegment(a, b, c)) return true;
   if (Math.abs(o2) <= EPSILON && onSegment(a, b, d)) return true;
-  if (Math.abs(o3) <= EPSILON && onSegment(c, a, b)) return true;
-  if (Math.abs(o4) <= EPSILON && onSegment(d, a, b)) return true;
+  if (Math.abs(o3) <= EPSILON && onSegment(c, d, a)) return true;
+  if (Math.abs(o4) <= EPSILON && onSegment(c, d, b)) return true;
   return false;
 }
 
@@ -132,7 +132,16 @@ export interface WallConnectionCandidate extends WallSegment2D {
   wallId: string;
 }
 
-/** Return the existing wall groups touched by any vertex of a new wall path. */
+export function closestPointOnSegment(point: Vector2, start: Vector2, end: Vector2): Vector2 {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= EPSILON) return { ...start };
+  const t = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared));
+  return { x: start.x + dx * t, y: start.y + dy * t };
+}
+
+/** Return existing wall groups touched by a new path at endpoints, T-junctions, or crossings. */
 export function findConnectedWallGroups(
   points: Vector2[],
   existing: WallConnectionCandidate[],
@@ -142,10 +151,18 @@ export function findConnectedWallGroups(
   const groups = new Set<string>();
   for (const point of points) {
     for (const segment of existing) {
-      if (Math.hypot(point.x - segment.start.x, point.y - segment.start.y) <= tolerance ||
-          Math.hypot(point.x - segment.end.x, point.y - segment.end.y) <= tolerance) {
+      if (pointToSegmentDistance(point, segment.start, segment.end) <= tolerance) {
         groups.add(segment.wallId);
       }
+    }
+  }
+  for (let index = 0; index < points.length - 1; index++) {
+    const start = points[index]!;
+    const end = points[index + 1]!;
+    for (const segment of existing) {
+      // Midpoint proximity alone would merge nearby parallel walls. T-junctions
+      // are handled by the vertex-to-segment pass above; this catches true crossings.
+      if (segmentsIntersect(start, end, segment.start, segment.end)) groups.add(segment.wallId);
     }
   }
   return [...groups].sort();
