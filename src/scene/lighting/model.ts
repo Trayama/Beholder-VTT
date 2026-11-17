@@ -54,6 +54,16 @@ export function readLightSourceMetadata(item: SceneItem): LightSourceMetadata | 
   return raw as unknown as LightSourceMetadata;
 }
 
+export function updateLightSourceMetadata(item: SceneItem, update: Partial<Omit<LightSourceMetadata, "schemaVersion" | "lightId" | "revision">>): boolean {
+  const current = readLightSourceMetadata(item);
+  if (!current) return false;
+  const next = { ...current, ...update, revision: current.revision + 1 };
+  const candidate = { ...item, metadata: { ...item.metadata, [LIGHT_SOURCE_KEY]: next } };
+  if (!readLightSourceMetadata(candidate)) return false;
+  item.metadata = { ...item.metadata, [LIGHT_SOURCE_KEY]: next };
+  return true;
+}
+
 export function isLightSource(item: SceneItem): item is LineItem {
   return item.type === "LINE" && !!item.startPosition && !!item.endPosition && !!readLightSourceMetadata(item);
 }
