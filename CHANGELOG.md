@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.15 - Token-attached lights and light selection
+
+- Add a selector to edit any shared light in the current scene.
+- Allow GM to attach a light to a CHARACTER or MOUNT token; its local projection follows the same token.
+- Reconcile attachment changes on all clients and preserve attachment across property edits.
+- Keep dynamic wall-light occlusion, ambient illumination, and real-room acceptance open.
+
 ## 0.0.14 - Light properties
 
 - Add a GM popover to edit shared light radius, source softness, falloff, and cone angles.
