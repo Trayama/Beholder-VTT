@@ -11,7 +11,7 @@ registry.register(new LightingModule());
 OBR.onReady(async () => {
   try {
     const role = await OBR.player.getRole();
-    logger.info("Owlbear SDK ready.", { role, version: "0.0.17" });
+    logger.info("Owlbear SDK ready.", { role, version: "0.0.18" });
     await registry.startAll();
   } catch (error) {
     logger.error("Extension startup failed.", error);
