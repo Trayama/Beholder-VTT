@@ -29,7 +29,8 @@
 - [x] Undo/redo actions.
 - [x] Free positioning and optional grid snapping.
 - [x] Endpoint snapping while drawing and editing.
-- [ ] Automatic wall connections, junction topology, and seam handling.
+- [x] Merge wall groups when a new path vertex snaps to one or more existing wall endpoints.
+- [ ] T-junctions at segment midpoints, crossing-wall splitting, and seam handling.
 - [ ] Junction and seam tests.
 - [ ] Real-room interaction and persistence acceptance.
 
